@@ -114,7 +114,7 @@ class WIFStore(MenuSystem):
             export_all.append(wif)
 
             submenu = [
-                MenuItem("Detail", f=self.detail, arg=(wif,pk,sk)),
+                MenuItem("Detail", f=self.detail, arg=(wif,pk,sk), predicate=not_hobbled_mode),
                 MenuItem("Addresses", f=self.show_addr_step1, arg=pk),
                 MenuItem("Sign MSG", f=self.sign_msg_step1, arg=sk),
                 MenuItem('Delete', f=self.delete, arg=(i, pk), predicate=not_hobbled_mode),
@@ -128,7 +128,7 @@ class WIFStore(MenuSystem):
         if a_items:
             items += a_items
             if len(a_items) > 1:
-                items.append(MenuItem("Export All", f=self.export_all, arg=export_all))
+                items.append(MenuItem("Export All", f=self.export_all, arg=export_all, predicate=not_hobbled_mode))
                 items.append(MenuItem("Clear All", f=self.clear_all, predicate=not_hobbled_mode))
         else:
             items.append(MenuItem("(none yet)"))

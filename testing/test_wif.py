@@ -393,12 +393,14 @@ def test_hobbled_wif_store(en_okeys, set_hobble, settings_remove, import_wif_to_
         pick_menu_item("WIF Store")
         time.sleep(.1)
         menu = cap_menu()
-        # check it is read-only
+        # check it is read-only and secrets cannot be exported in hobbled mode
         assert "Import WIF" not in menu
+        assert "Export All" not in menu
         assert "Clear All" not in menu
         pick_menu_item(menu[0])
         time.sleep(.1)
         menu = cap_menu()
+        assert "Detail" not in menu
         assert "Delete" not in menu
     else:
         assert "WIF Store" not in cap_menu()

@@ -951,9 +951,9 @@ Q1 specials:
 
     log = ("--log" in sys.argv)
     if log:
-        logfile = os.path.join(log_base_dir, 'cc_simulator.log')
-        # create or truncate logfile and set correct permissions before starting xterm
-        file_desc = os.open(logfile, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o644)
+        # Avoid exposing the REPL through a predictable, world-readable /tmp file.
+        file_desc, logfile = tempfile.mkstemp(prefix='cc_simulator_', suffix='.log',
+                                              dir=log_base_dir)
         os.close(file_desc)
 
         xterm_args.extend(['-l', '-lf', logfile])

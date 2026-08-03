@@ -51,6 +51,10 @@ PSBT_ATTESTATION_SUBTYPE = const(0)
 # Amounts over 5% are warned regardless.
 DEFAULT_MAX_FEE_PERCENTAGE = const(10)
 
+# Maximum number of relative timelocks retained for display. PSBT inputs are
+# untrusted, so this limit must be applied while parsing rather than in the UX.
+MAX_SHOW_RELATIVE_TIMELOCKS = const(10)
+
 # print some things, sometimes
 DEBUG = ckcc.is_simulator()
 
@@ -1354,17 +1358,23 @@ class psbtObject(psbtProxy):
             # we should not reach this point (ie. raise something to abort signing)
             return
 
-    def ux_relative_timelocks(self, tb, bb):
+    def ux_relative_timelocks(self, tb, bb, num_tb=None, num_bb=None,
+                              tb_all_same=None, bb_all_same=None):
         # visualize 10 largest timelock to user
         # when signing a tx
-        MAX_SHOW = 10
-        num_tb = len(tb)
-        num_bb = len(bb)
+        if num_tb is None:
+            num_tb = len(tb)
+        if num_bb is None:
+            num_bb = len(bb)
+        if tb_all_same is None:
+            tb_all_same = all(tb[0][1] == i[1] for i in tb) if tb else True
+        if bb_all_same is None:
+            bb_all_same = all(bb[0][1] == i[1] for i in bb) if bb else True
 
-        if (num_tb + num_bb) > MAX_SHOW:
+        if (num_tb + num_bb) > MAX_SHOW_RELATIVE_TIMELOCKS:
             # 10 from each is enough for us to have in memory
-            tb = sorted(tb, key=lambda item: item[1], reverse=True)[:10]
-            bb = sorted(bb, key=lambda item: item[1], reverse=True)[:10]
+            tb = sorted(tb, key=lambda item: item[1], reverse=True)
+            bb = sorted(bb, key=lambda item: item[1], reverse=True)
             if (num_tb >= 5) and (num_bb >= 5):
                 # 5 biggest from each
                 tb = tb[:5]
@@ -1372,10 +1382,10 @@ class psbtObject(psbtProxy):
             else:
                 if num_tb < num_bb:
                     tb = tb[:num_tb]
-                    bb = bb[:(MAX_SHOW - num_tb)]
+                    bb = bb[:(MAX_SHOW_RELATIVE_TIMELOCKS - num_tb)]
                 else:
                     bb = bb[:num_bb]
-                    tb = tb[:(MAX_SHOW - num_bb)]
+                    tb = tb[:(MAX_SHOW_RELATIVE_TIMELOCKS - num_bb)]
 
         if num_bb:
             # Block height relative lock-time
@@ -1384,7 +1394,7 @@ class psbtObject(psbtProxy):
                 msg = "Input %d. has relative block height timelock of %d blocks\n" % (
                         idx, val
                     )
-            elif all(bb[0][1] == i[1] for i in bb):
+            elif bb_all_same:
                 msg = "%d inputs have relative block height timelock of %d blocks\n" % (
                         num_bb, bb[0][1]
                     )
@@ -1406,7 +1416,7 @@ class psbtObject(psbtProxy):
                 msg = "Input %d. has relative time-based timelock of:\n %s\n" % (
                     idx, val
                 )
-            elif all(tb[0][1] == i[1] for i in tb):
+            elif tb_all_same:
                 msg = "%d inputs have relative time-based timelock of:\n %s\n" % (
                         num_tb, seconds2human_readable(tb[0][1])
                     )
@@ -1477,8 +1487,14 @@ class psbtObject(psbtProxy):
 
         # time based relative locks
         tb_rel_locks = []
+        num_tb_rel_locks = 0
+        tb_rel_lock_value = None
+        tb_rel_locks_all_same = True
         # block height based relative locks
         bb_rel_locks = []
+        num_bb_rel_locks = 0
+        bb_rel_lock_value = None
+        bb_rel_locks_all_same = True
         smallest_nsequence = 0xffffffff
         # this parses the input TXN in-place
         for idx, txin in self.input_iter():
@@ -1504,9 +1520,28 @@ class psbtObject(psbtProxy):
                 has_rtl = self.inputs[idx].has_relative_timelock(txin)
                 if has_rtl:
                     if has_rtl[0]:
-                        tb_rel_locks.append((idx, has_rtl[1]))
+                        rel_locks = tb_rel_locks
+                        num_tb_rel_locks += 1
+                        if tb_rel_lock_value is None:
+                            tb_rel_lock_value = has_rtl[1]
+                        elif tb_rel_lock_value != has_rtl[1]:
+                            tb_rel_locks_all_same = False
                     else:
-                        bb_rel_locks.append((idx, has_rtl[1]))
+                        rel_locks = bb_rel_locks
+                        num_bb_rel_locks += 1
+                        if bb_rel_lock_value is None:
+                            bb_rel_lock_value = has_rtl[1]
+                        elif bb_rel_lock_value != has_rtl[1]:
+                            bb_rel_locks_all_same = False
+
+                    item = (idx, has_rtl[1])
+                    if len(rel_locks) < MAX_SHOW_RELATIVE_TIMELOCKS:
+                        rel_locks.append(item)
+                    else:
+                        smallest = min(range(len(rel_locks)),
+                                       key=lambda i: rel_locks[i][1])
+                        if item[1] > rel_locks[smallest][1]:
+                            rel_locks[smallest] = item
 
             if txin.nSequence < smallest_nsequence:
                 smallest_nsequence = txin.nSequence
@@ -1533,7 +1568,9 @@ class psbtObject(psbtProxy):
                 self.ux_notes.append(("Abs Locktime", msg))
 
         # create UX for users about tx level relative timelocks (nSequence)
-        self.ux_relative_timelocks(tb_rel_locks, bb_rel_locks)
+        self.ux_relative_timelocks(
+            tb_rel_locks, bb_rel_locks, num_tb_rel_locks, num_bb_rel_locks,
+            tb_rel_locks_all_same, bb_rel_locks_all_same)
 
         assert len(self.inputs) == self.num_inputs, 'ni mismatch'
 

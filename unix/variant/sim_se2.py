@@ -24,7 +24,6 @@ class SecondSecureElement:
         from trick_pins import TC_FAKE_OUT, TC_WORD_WALLET, TC_XPRV_WALLET
         from trick_pins import TC_DELTA_MODE, make_slot, TRICK_SLOT_LAYOUT
 
-        print(" .. tp = %r" % tp)
         if not tp: return
 
         for pin, (slot_num, tc_flags, tc_arg) in tp.items():

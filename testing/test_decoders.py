@@ -50,6 +50,19 @@ def test_detector_bin(fname, expect, encoding, try_decode):
 
     ft, vals = try_decode(arg)
     assert ft == expect
+
+
+@pytest.mark.parametrize('text,expect', [
+    ('plain BBQr text', 'text'),
+    ('signmessage m/0 ascii:hello', 'smsg'),
+])
+@pytest.mark.parametrize('as_buffer', [False, True])
+def test_detector_text_buffer(text, expect, as_buffer, try_decode):
+    # BBQr Unicode payloads reach the shared decoder as a binary buffer.
+    arg = bytearray(text.encode()) if as_buffer else text
+    ft, vals = try_decode(arg)
+    assert ft == expect
+    assert vals[0] == text
     
 
 @pytest.mark.parametrize('url', [

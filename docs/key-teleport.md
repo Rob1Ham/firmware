@@ -104,8 +104,8 @@ While ECDH is enough to assure privacy from men in the middle, we
 add an additional layer of encryption. We call this the "paranoid key" internally
 and in the UX it is called "Teleport Password".
 
-The user sees a random 8-character password, generated as a random 40-bit value, but
-shown in Base32 (8 chars) for the human to enter. We apply PBKDF2-SHA512 with
+The user sees a random 16-character password, generated as a random 80-bit value, but
+shown in Base32 (16 chars) for the human to enter. We apply PBKDF2-SHA512 with
 an iteration count of 5000 to stretch that to 512 bits, of which we use half.
 The session key is used as the key for the KDF, and the entered value as salt.
 
@@ -114,7 +114,7 @@ The session key is used as the key for the KDF, and the entered value as salt.
 - verify checksum:
     - final 2 bytes should be `== SHA256(decrypted body[0:-2])[-2:]`
     - if not, corruption, truncation, or wrong keys
-- if that decryption is correct, then prompt user for the paranoid key (8 chars)
+- if that decryption is correct, then prompt user for the paranoid key (16 chars)
 - stretch that value using session key and 5000 iterations of PBKDF2-SHA512
 - use upper 256 bits and run AES-256-CTR again
 - same checksum of 2 bytes of SHA256 are found inside after decryption

@@ -1057,7 +1057,7 @@ async def qr_psbt_sign(decoder, psbt_len, raw):
         psbt_len = total
 
     else:
-        with SFFile(TXN_INPUT_OFFSET, max_size=psbt_len) as out:
+        with SFFile(TXN_INPUT_OFFSET, length=psbt_len) as out:
             taste = out.read(10)
             _, output_encoder, _ = psbt_encoding_taster(taste, psbt_len)
 

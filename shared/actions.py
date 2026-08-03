@@ -2544,7 +2544,8 @@ async def pushtx_setup_menu(*a):
 
     if was and cur is None:
         # they have a non-standard choice
-        label = was.split("/")[2]  # pull out domain (netloc)
+        parts = was.split("/")
+        label = parts[2] if len(parts) > 2 and parts[2] else "Custom URL..."
         choices.append(MenuItem(label, f=edit_custom, arg=(was,)))
         cur = len(choices)-1
     else:

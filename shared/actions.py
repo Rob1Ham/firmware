@@ -420,7 +420,7 @@ async def show_nickname(nick):
 
     ch = await ux_wait_keyup(flush=True)
 
-    if ch.upper() == settings.get('kbtn', None):
+    if version.has_qwerty and ch.upper() == settings.get('kbtn', None):
         # support kill btn on nick screen too
         callgate.fast_wipe(False)
         

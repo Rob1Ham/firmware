@@ -27,7 +27,7 @@ def numpad_remap(key):
     elif key == '7':
         return KEY_PAGE_UP
     elif key == '9':
-        return KEY_END
+        return KEY_PAGE_DOWN
     elif key == '0':
         return KEY_HOME
     elif key == 'y':
@@ -461,7 +461,7 @@ class MenuSystem:
                 # zip to top, no selection
                 self.cursor = 0
                 self.ypos = 0
-            elif '1' <= key <= '9':
+            elif key in ('123456789' if has_qwerty else '1234'):
                 # jump down, based on screen postion
                 self.goto_idx(ord(key)-ord('1'))
             elif key in self.shortcuts:

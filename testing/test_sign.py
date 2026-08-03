@@ -3639,15 +3639,12 @@ def test_txn_nVersion_zero(segwit, fake_txn, start_sign, cap_story, goto_home):
     assert "txn version" in story
 
 @pytest.mark.parametrize("segwit_in", [True, False])
-@pytest.mark.parametrize("num_ins", [2, 110])
+@pytest.mark.parametrize("num_ins", [2, 100, 101, 110])
 def test_duplicate_inputs(segwit_in, num_ins, fake_txn, start_sign, end_sign, cap_story):
     psbt = fake_txn(num_ins, 2, segwit_in=segwit_in, dupe_ins=[num_ins-1])
     start_sign(psbt)
     title, story = cap_story()
-    if num_ins <= 100:
-        assert "Duplicate input" in story
-    else:
-        assert title == "OK TO SEND?"
+    assert "Duplicate input" in story
 
 
 def test_txid_qr(fake_txn, start_sign, cap_story, press_cancel, press_select):

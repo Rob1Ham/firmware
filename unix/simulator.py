@@ -951,6 +951,10 @@ Q1 specials:
 
     log = ("--log" in sys.argv)
     if log:
+        if not segregate:
+            # Keep the logfile in a private directory so another local user cannot
+            # pre-create the path (or replace it with a symlink) before xterm opens it.
+            log_base_dir = tempfile.mkdtemp(prefix='cc-simulator-')
         logfile = os.path.join(log_base_dir, 'cc_simulator.log')
         # create or truncate logfile and set correct permissions before starting xterm
         file_desc = os.open(logfile, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o644)

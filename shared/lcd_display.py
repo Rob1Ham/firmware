@@ -815,7 +815,7 @@ class Display:
         # horz center - easy
         x = (WIDTH - qw) // 2
 
-        self.clear()
+        self.real_clear()
 
         self.dis.show_qr_data(x, y, w, expand, scan_w, data, trim_lines)
 

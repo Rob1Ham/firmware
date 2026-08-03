@@ -802,7 +802,7 @@ async def done_signing(psbt, tx_req, input_method=None, filename=None,
     # - allow PushTX if enabled (first thing)
     # - can save final TXN out to SD card/VirtDisk, share by NFC, QR.
 
-    from glob import PSRAM, hsm_active
+    from glob import PSRAM, hsm_active, settings
     from sffile import SFFile
     from ux import show_qr_code, import_export_prompt
 
@@ -840,6 +840,14 @@ async def done_signing(psbt, tx_req, input_method=None, filename=None,
         title = "PSBT Signed"
 
     if txid and await try_push_tx(data_len, txid, data_sha2):
+        # PushTX skips the initial export back to the input media, but it must
+        # still honor the user's request to remove the source PSBT.
+        if filename and input_method in ("sd", "vdisk") and settings.get('del', 0):
+            try:
+                with CardSlot(input_method == "vdisk", slot_b=slot_b) as card:
+                    card.securely_blank_file(filename)
+            except: pass
+
         # go directly to reexport menu after pushTX
         first_time = False
         title = "TX Pushed"

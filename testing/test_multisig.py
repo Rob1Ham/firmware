@@ -1665,6 +1665,15 @@ def test_make_airgapped(addr_fmt, acct_num, M_N, goto_home, cap_story, pick_menu
         assert 0, addr_fmt
 
     if way == "qr":
+        # Oversized BBQr input must be rejected before its JSON is parsed.
+        if addr_fmt == 'p2wsh' and acct_num is None and M_N == (2, 3) and incl_self is True:
+            _, parts = split_qrs('{"padding":"%s"}' % ('x' * 1100), 'J', max_version=20)
+            for p in parts:
+                scan_a_qr(p)
+
+            time.sleep(1)
+            assert "XPUB file too large" in cap_screen()
+
         # JSON but wrong
         _, parts = split_qrs('{"json": "but wrong","missing": "important data"}',
                              'J', max_version=20)

@@ -1777,12 +1777,13 @@ class TXInpExplorer(TXExplorer):
 
         if inp.sighash and (inp.sighash != SIGHASH_ALL):
             # only show sighash value to the user if it is non-standard
-            psbt_item += "sighash: %s\n\n" % {
+            sighash_name = {
                 1: "ALL", 2: "NONE", 3: "SINGLE",
                 1 | 0x80: "ALL|ANYONECANPAY",
                 2 | 0x80: "NONE|ANYONECANPAY",
                 3 | 0x80: "SINGLE|ANYONECANPAY",
-            }[inp.sighash]
+            }.get(inp.sighash, "0x%x" % inp.sighash)
+            psbt_item += "sighash: %s\n\n" % sighash_name
 
         if psbt_item:
             psbt_item = "=== PSBT ===\n\n" + psbt_item

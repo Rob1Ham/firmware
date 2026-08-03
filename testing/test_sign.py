@@ -3552,6 +3552,25 @@ def test_unknown_input_script(stype, fake_txn , start_sign, cap_story, use_testn
     txin_explorer(len(ins), ins)
 
 
+def test_foreign_input_unsupported_sighash(fake_txn, start_sign, cap_story, use_testnet,
+                                           txin_explorer):
+    use_testnet()
+
+    def hack(psbt):
+        # A foreign input is not subject to signing sighash validation.
+        psbt.inputs[0].bip32_paths = None
+        psbt.inputs[0].sighash = 0xdeadbeef
+
+    ins = [("p2wpkh", 100000000, 0, "XTN", False, "0xdeadbeef"),
+           ("p2wpkh", 100000000, 1)]
+
+    psbt = fake_txn(2, 2, segwit_in=True, change_outputs=[0], psbt_hacker=hack)
+    start_sign(psbt)
+    title, _ = cap_story()
+    assert title == "OK TO SEND?"
+    txin_explorer(len(ins), ins)
+
+
 def test_tx_explorer_goto_idx(fake_txn, start_sign, cap_story, use_testnet, need_keypress,
                               pick_menu_item, cap_screen, enter_number, press_cancel, is_q1):
     use_testnet()

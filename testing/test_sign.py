@@ -3644,10 +3644,7 @@ def test_duplicate_inputs(segwit_in, num_ins, fake_txn, start_sign, end_sign, ca
     psbt = fake_txn(num_ins, 2, segwit_in=segwit_in, dupe_ins=[num_ins-1])
     start_sign(psbt)
     title, story = cap_story()
-    if num_ins <= 100:
-        assert "Duplicate input" in story
-    else:
-        assert title == "OK TO SEND?"
+    assert "Duplicate input" in story
 
 
 def test_txid_qr(fake_txn, start_sign, cap_story, press_cancel, press_select):

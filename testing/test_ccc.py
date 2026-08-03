@@ -21,6 +21,14 @@ from psbt import BasicPSBT
 # pubkey for production server. 
 SERVER_PUBKEY = '0231301ec4acec08c1c7d0181f4ffb8be70d693acccc86cccb8f00bf2e00fcabfd'
 
+
+def test_key_c_rejects_invalid_bip39_checksum(sim_exec):
+    # Dictionary-valid words can arrive from QR decoding before checksum validation.
+    words = ['abandon'] * 12
+    cmd = 'from ccc import CCCFeature; RV.write(repr(CCCFeature.words_check(%r)))' % words
+    assert sim_exec(cmd) == 'False'
+
+
 @pytest.fixture
 def goto_ccc_menu(goto_home, pick_menu_item, is_q1):
     def doit():

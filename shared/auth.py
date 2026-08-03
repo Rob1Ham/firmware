@@ -1619,7 +1619,8 @@ class TXExplorer:
         if offset:
             rv += ', LEFT to go back'
 
-        rv += ", (2) to go to index"
+        if self.max_items > 1:
+            rv += ", (2) to go to index"
 
         if not version.has_qwerty:
             # Q has hint key
@@ -1661,7 +1662,7 @@ class TXExplorer:
                 else:
                     # go forwards
                     start += self.n
-            elif ch == "2":
+            elif ch == "2" and self.max_items > 1:
                 max_v = self.max_items - 1
                 res = await ux_enter_number("Start Idx (0-%d):" % max_v, max_value=max_v)
                 if res is None: continue

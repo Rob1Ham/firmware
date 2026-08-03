@@ -3618,6 +3618,31 @@ def test_tx_explorer_goto_idx(fake_txn, start_sign, cap_story, use_testnet, need
         press_cancel()
 
 
+def test_tx_explorer_goto_idx_single_item(fake_txn, start_sign, cap_story, use_testnet,
+                                          need_keypress, pick_menu_item, press_cancel):
+    use_testnet()
+    psbt = fake_txn(1, 1, segwit_in=True)
+    start_sign(psbt)
+    need_keypress("2")
+
+    for item, title in [("Inputs", "Input 0"), ("Outputs", "0-0")]:
+        pick_menu_item(item)
+        time.sleep(.1)
+        shown_title, story = cap_story()
+        assert shown_title == title
+        assert "(2)" not in story
+
+        # A stale or queued shortcut must not open a zero-range number prompt.
+        need_keypress("2")
+        time.sleep(.1)
+        shown_title, story = cap_story()
+        assert shown_title == title
+        assert "(2)" not in story
+        press_cancel()
+
+    press_cancel()
+
+
 @pytest.mark.parametrize("segwit", [True, False])
 def test_txn_nVersion_zero(segwit, fake_txn, start_sign, cap_story, goto_home):
     goto_home()

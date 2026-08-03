@@ -279,7 +279,7 @@ def doit(keydir, outfn=None, build_dir=None, high_water=False,
         vectors = open(build_dir + '/firmware0.bin', 'rb').read()
         body = open(build_dir + '/firmware1.bin', 'rb').read()
 
-    if hw_compat in { 'mk4', '4', 'mk5', '5', 'mk' }:
+    if hw_compat is None or hw_compat in { 'mk4', '4', 'mk5', '5', 'mk' }:
         # Mk4 and 5 can run the same firmware, once Mk5 support was added
         hw_compat = MK_4_OK | MK_5_OK
     elif hw_compat == 'q1':

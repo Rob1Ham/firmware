@@ -790,8 +790,6 @@ class USBHandler:
             if offset == 0:
                 assert data[0:5] == b'psbt\xff', 'psbt'
 
-        self.file_checksum.update(data)
-
         for pos in range(offset, offset+len(data), 256):
 
             # write up to 256 bytes
@@ -827,8 +825,9 @@ class USBHandler:
                 # pretend we wrote it, so ckcc-protocol or whatever gives normal feedback
                 return offset
 
-            # write to PSRAM
+            # write to PSRAM and hash only committed bytes
             PSRAM.write(pos, here)
+            self.file_checksum.update(here)
 
         if offset+len(data) >= total_size and not hsm_active:
             # probably done

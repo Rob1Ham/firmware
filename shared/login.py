@@ -158,10 +158,26 @@ class LoginUX:
 
                     self.show_pin(True)
                 else:
-                    # Q: not confirming the words, they see them and continue or not
-                    self.pin_prefix = self.pin
-                    self.pin = ''
-                    self.show_pin(False)
+                    # Q: require an explicit acknowledgement of the anti-phishing
+                    # words before collecting the second half of the PIN.
+                    pattern = KEY_ENTER + KEY_CANCEL
+                    if self.kill_btn:
+                        pattern += self.kill_btn
+
+                    nxt = await ux_wait_keyup(pattern, flush=True)
+
+                    if not self.is_setting and nxt == self.kill_btn:
+                        import callgate
+                        callgate.fast_wipe(False)
+                        # not reached
+
+                    if nxt == KEY_ENTER:
+                        self.pin_prefix = self.pin
+                        self.pin = ''
+                    elif nxt == KEY_CANCEL:
+                        self.reset()
+
+                    self.show_pin(True)
 
             elif '0' <= ch <= '9':
                 # digit pressed

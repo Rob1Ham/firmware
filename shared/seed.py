@@ -567,8 +567,6 @@ async def set_ephemeral_seed(encoded, chain=None, summarize_ux=True, bip39pw='',
     xfp = "[" + xfp2str(settings.get("xfp", 0)) + "]"
     if summarize_ux:
         msg = "New temporary master key is in effect now."
-        if bip39pw:
-            msg += "\n\nPassphrase: %s" % bip39pw
         await ux_show_story(title=xfp, msg=msg)
 
     return applied
@@ -1401,9 +1399,8 @@ async def apply_pass_value(new_pp):
 
     msg = ('Above is the master key fingerprint of the new wallet'
            ' created by adding passphrase to %s.'
-           '\n\nPassphrase: %s'
            '\n\nPress %s to abort, %s to use the new wallet, (1) to apply'
-           ' and save to MicroSD for future.') % (msg, new_pp, X, OK)
+           ' and save to MicroSD for future.') % (msg, X, OK)
 
     ch = await ux_show_story(msg, title="[%s]" % xfp_str, escape='1')
     if ch == 'x':

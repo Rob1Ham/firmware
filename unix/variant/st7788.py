@@ -29,8 +29,8 @@ class ST7788:
 
     def gpu_send(self, cmd, *args):
         # for use by variant/gpu.py code
-        if len(args) < 4:
-            args += (0,)*(4-len(args))
+        if len(args) < 6:
+            args += (0,)*(6-len(args))
         hdr = struct.pack('<s6H', cmd, *args)
         self.pipe.write(hdr)
 

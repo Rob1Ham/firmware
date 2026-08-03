@@ -104,8 +104,8 @@ $(OBJS): Makefile
 
 $(TARGETS): $(TARGET_ELF) Makefile
 
-sigheader.py: sigheader.h mk-sigheader.py
-	python3 mk-sigheader.py
+sigheader.py: sigheader.h ../make-sigheader.py
+	python3 ../make-sigheader.py
 
 # link step
 $(TARGET_ELF): $(OBJS) $(LINKER_SCRIPT) Makefile

@@ -106,21 +106,19 @@ def _login(device, is_Q, pin, scrambled=False, mk4_kbtn=None, num_failed=None):
         _need_keypress(device, ch)
     _press_select(device, is_Q)
 
-    if not is_Q:
-        # intermediate step in mk4 where anti-phishing words are shown
-        # needs confirmation
-        # mk4 randomizes twice - different mapping for prefix and for suffix
-        # Q randomizes just once
-        if mk4_kbtn:
-            _need_keypress(device, mk4_kbtn)
-            time.sleep(.5)
-            # now we MUST be dead
-            with pytest.raises(Exception):
-                _press_select(device, is_Q, timeout=1000)
-            return True
+    # intermediate step where anti-phishing words are shown needs confirmation
+    if mk4_kbtn:
+        _need_keypress(device, mk4_kbtn)
+        time.sleep(.5)
+        # now we MUST be dead
+        with pytest.raises(Exception):
+            _press_select(device, is_Q, timeout=1000)
+        return True
 
-        _press_select(device, is_Q)  # confirm anti-phishing words
-        time.sleep(1)
+    _press_select(device, is_Q)  # confirm anti-phishing words
+    time.sleep(1)
+    if not is_Q:
+        # Mk4 randomizes again after the prefix; Q keeps the same mapping.
         if is_scrambled:
             scr = _cap_screen(device)
             top = scr.split()
@@ -783,9 +781,8 @@ def test_sssp_trick_pins(request):
         time.sleep(.1)
     _press_select(device, is_Q)
 
-    if not is_Q:
-        # anti-phishing words
-        _press_select(device, is_Q)
+    # confirm anti-phishing words
+    _press_select(device, is_Q)
 
     for ch in ct_pin[-2:]:
         _need_keypress(device, ch)

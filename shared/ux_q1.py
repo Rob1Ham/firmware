@@ -420,6 +420,7 @@ def ux_show_phish_words(dis, words):
     else:
         dis.text(x - len(words[0]) - 1, y,   words[0])
         dis.text(x + 1, y, words[1])
+        dis.text(None, y + 2, "CANCEL or ENTER to continue")
 
 def ux_show_pin(dis, pin, subtitle, prefix, is_confirmation, force_draw,
                     footer=None, randomize=None):

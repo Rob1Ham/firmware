@@ -667,7 +667,7 @@ async def seed_word_entry(prompt, num_words, has_checksum=True, done_cb=None, li
                 what, vals = decode_qr_result(got, expect_secret=True)
             except QRDecodeExplained as e:
                 err_msg = str(e)
-                redraw_words()
+                redraw_words(words)
                 continue
 
             if what != "words":

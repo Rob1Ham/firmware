@@ -650,8 +650,9 @@ class SPAddrWhitelist(MenuSystem):
         await ux_show_story("Max %d items in whitelist. Please make room first." % MAX_WHITELIST)
 
     async def add_addresses(self, more_addrs):
-        # add new entries, if unique; preserve ordering
-        addrs = self.policy.get('addrs', [])
+        # Build a candidate list so rejecting an over-limit import cannot mutate
+        # the list held by the current policy.
+        addrs = list(self.policy.get('addrs', []))
         new = []
         for a in more_addrs:
             if a not in addrs:

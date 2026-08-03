@@ -167,6 +167,12 @@ def decode_qr_result(got, expect_secret=False, expect_text=False, expect_bbqr=Fa
     if expect_secret:
         raise QRDecodeExplained("Not a secret?")
 
+    if not isinstance(got, str):
+        try:
+            got = got.decode()
+        except UnicodeError:
+            raise QRDecodeExplained('UTF-8 decode failed')
+
     try:
         dct = json.loads(got)
         if "msg" in dct:

@@ -163,9 +163,9 @@ async def kt_start_send(rx_data):
 
     while 1:
         # - ask for the sender's password -- nearly any value will be accepted
-        code = await ux_input_text('', confirm_exit=False, hex_only=True, max_len=8,
-            prompt='Teleport Password (number)', min_len=8, b39_complete=False, scan_ok=False,
-            placeholder='########', funct_keys=None, force_xy=None)
+        code = await ux_input_text('', confirm_exit=False, hex_only=True, max_len=NOID_PW_CHARS,
+            prompt='Teleport Password (number)', min_len=NOID_PW_CHARS, b39_complete=False, scan_ok=False,
+            placeholder='################', funct_keys=None, force_xy=None)
         if not code: return
 
         rx_pubkey = decrypt_rx_pubkey(code, rx_data)
@@ -222,11 +222,14 @@ async def kt_do_send(rx_pubkey, dtype, raw=None, obj=None, prefix=b'', rx_label=
         from actions import goto_top_menu
         goto_top_menu()
     
+NOID_KEY_BYTES = 10      # 80-bit teleport password
+NOID_PW_CHARS = 16      # base32 chars for 10 bytes
+
 def pick_noid_key():
-    # pick an 40 bit password, shown as base32
+    # pick an 80-bit password, shown as base32
     # - on rx, libngu base32 decoder will convert '018' into 'OLB'
     # - but a little tempted to removed vowels here?
-    k = ngu.random.bytes(5)
+    k = ngu.random.bytes(NOID_KEY_BYTES)
     txt = b32encode(k).upper()
 
     return k, txt
@@ -271,14 +274,14 @@ async def kt_decode_rx(is_psbt, payload):
 
     while 1:
         # ask for noid key
-        pw = await ux_input_text('', confirm_exit=False, hex_only=False, max_len=8,
-                prompt=prompt, min_len=8, b39_complete=False, scan_ok=False,
-                placeholder='********', funct_keys=None, force_xy=None)
+        pw = await ux_input_text('', confirm_exit=False, hex_only=False, max_len=NOID_PW_CHARS,
+                prompt=prompt, min_len=NOID_PW_CHARS, b39_complete=False, scan_ok=False,
+                placeholder='****************', funct_keys=None, force_xy=None)
         if not pw: return
 
         dis.fullscreen("Wait...")
         try:
-            assert len(pw) == 8
+            assert len(pw) == NOID_PW_CHARS
             noid_key = b32decode(pw)       # case insenstive, and smart about confused chars
             final = decode_step2(ses_key, noid_key, body)
             if final is not None: 
@@ -430,7 +433,7 @@ def noid_stretch(session_key, noid_key):
 def encode_payload(my_keypair, his_pubkey, noid_key, body, for_psbt=False):
     # do all the encryption for sender
     assert len(his_pubkey) == 33
-    assert len(noid_key) == 5
+    assert len(noid_key) == NOID_KEY_BYTES
 
     # this can fail with ValueError: secp256k1_ec_pubkey_parse
     # if the user has provided the wrong value for numeric password
@@ -470,7 +473,7 @@ def decode_step1(my_keypair, his_pubkey, body):
 
 def decode_step2(session_key, noid_key, body):
     # After we have the noid key, can decode true payload
-    assert len(noid_key) == 5
+    assert len(noid_key) == NOID_KEY_BYTES
 
     pk = noid_stretch(session_key, noid_key)
 

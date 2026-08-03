@@ -1777,7 +1777,7 @@ async def ondevice_multisig_create(mode='p2wsh', addr_fmt=AF_P2WSH, is_qr=False,
         return
 
     if for_ccc:
-        secret, ccc_ms_count = for_ccc
+        secret, _ccc_ms_count = for_ccc
         # Always include 2 keys from CCC: own master (key A) and key C
         # - force them to same derivation.
         acct = await ux_enter_bip32_index('CCC Account Number:')
@@ -1832,9 +1832,14 @@ async def ondevice_multisig_create(mode='p2wsh', addr_fmt=AF_P2WSH, is_qr=False,
 
     if for_ccc:
         name = "Coldcard Co-sign" if version.has_qwerty else "CCC"
-        if ccc_ms_count:
-            # make name unique for each CCC wallet, but they can edit
-            name += " #%d" % (ccc_ms_count+1)
+        existing_names = {ms.name for ms in MultisigWallet.get_all()}
+        if name in existing_names:
+            # Counts can reuse a suffix after a wallet is deleted, so find an
+            # actually unused name instead.
+            suffix = 2
+            while "%s #%d" % (name, suffix) in existing_names:
+                suffix += 1
+            name += " #%d" % suffix
     else:
         name = 'CC-%d-of-%d' % (M, N)
 

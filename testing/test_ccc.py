@@ -1114,13 +1114,19 @@ def test_multiple_multisig_wallets(settings_set, setup_ccc, enter_enabled_ccc, c
     m = cap_menu()
     assert "↳ Build 2-of-N" in m
 
-    # delete one
-    pick_menu_item(mi)
+    # Delete a non-final wallet, then replace it. Its old numeric suffix may be
+    # reused, but must not collide with the later wallet that is still present.
+    deleted_mi = ami
+    pick_menu_item(deleted_mi)
     pick_menu_item("Delete")
     press_select() # confirm ms delete
     time.sleep(.1)
     m = cap_menu()
-    assert mi not in m
+    assert deleted_mi not in m
+
+    _, ami = ccc_ms_setup(N=8)
+    assert ami == deleted_mi
+    assert ami != mi
 
     # export one of the wallets
     w_mn, w_name = ami.rsplit(" ", 1)

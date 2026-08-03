@@ -1618,6 +1618,10 @@ async def ms_coordinator_qr(af_str, my_xfp, chain):
 
     def convertor(got):
         file_type, _, data = decode_qr_result(got, expect_bbqr=True)
+        # Match the SD-card import limit before decoding or parsing attacker-controlled
+        # BBQr data. Valid Coldcard XPUB exports are well below this bound.
+        if len(data) > 1100:
+            raise QRDecodeExplained('XPUB file too large')
         if isinstance(data, bytes):
             # we expect BBQr, but simple QR also possible here
             data = data.decode()

@@ -180,8 +180,10 @@ class WordNestMenu(MenuSystem):
     @classmethod
     async def get_n_words(cls, num_words):
         rv = []
-        for _ in range(num_words):
+        for idx in range(num_words):
             rv = await cls.get_word(rv, num_words)
+            if len(rv) != idx + 1:
+                break
 
         return rv
 

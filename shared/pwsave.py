@@ -8,6 +8,7 @@ from ux import ux_dramatic_pause, ux_confirm, ux_show_story, OK, X
 from utils import xfp2str, problem_file_line, B2A
 from menu import MenuItem, MenuSystem
 from glob import settings
+from charcodes import KEY_ENTER, KEY_CANCEL
 
 
 class PassphraseSaver:
@@ -122,16 +123,16 @@ class PassphraseSaverMenu(MenuSystem):
                 " to add passphrase to the current active"
                 " temporary seed."
             )
-            escape = "1x"
+            escape = "1x" + KEY_CANCEL
             if settings.master_get("words", True):
-                escape += "y"
+                escape += "y" + KEY_ENTER
                 msg += (" Press %s to add to master seed." % OK)
 
             msg += ("Press %s to exit." % X)
 
             ch = await ux_show_story(msg, title=title, escape=escape,
                                      strict_escape=True)
-            if ch == "x": return
+            if ch in "x" + KEY_CANCEL: return
             if ch == '1':
                 bypass_tmp = False
 

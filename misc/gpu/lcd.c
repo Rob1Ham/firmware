@@ -374,7 +374,7 @@ lcd_draw_progress(void)
         row[i] = ((i % 8) < 2) ? COL_BLACK : COL_FOREGROUND;
     }
 
-    send_window(0, PROG_Y, LCD_WIDTH, PROG_Y-LCD_HEIGHT, NULL);
+    send_window(0, PROG_Y, LCD_WIDTH, PROG_HEIGHT, NULL);
 
     for(int y=0; y<PROG_HEIGHT; y++) {
         lcd_write_data(LCD_WIDTH*2, (uint8_t *)(&row[NUM_PHASES - phase - 1]));

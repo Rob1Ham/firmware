@@ -122,7 +122,10 @@ class SpendingPolicy(dict):
             for idx, txo in psbt.output_iter():
                 out = psbt.outputs[idx]
                 if not out.is_change:  # ignore change
-                    addr = c.render_address(txo.scriptPubKey)
+                    try:
+                        addr = c.render_address(txo.scriptPubKey)
+                    except ValueError:
+                        raise SpendPolicyViolation("whitelist: non-address output")
                     if addr not in wl:
                         raise SpendPolicyViolation("whitelist: " + addr)
 

@@ -232,7 +232,11 @@ class CCCFeature:
     @classmethod
     def words_check(cls, words):
         # Test if words provided are right
-        enc = seed_words_to_encoded_secret(words)
+        try:
+            enc = seed_words_to_encoded_secret(words)
+        except ValueError:
+            # Invalid BIP-39 checksums are incorrect credentials, not fatal errors.
+            return False
         exp = cls.get_encoded_secret()
         return enc == exp
 

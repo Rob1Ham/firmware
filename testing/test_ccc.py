@@ -666,8 +666,8 @@ def test_ccc_magnitude(mag_ok, mag, setup_ccc, ccc_ms_setup,
 
 
 @pytest.mark.bitcoind
-@pytest.mark.parametrize("whitelist_ok", [True, False])
-def test_ccc_whitelist(whitelist_ok, setup_ccc, ccc_ms_setup,
+@pytest.mark.parametrize("output", ["allowed", "unlisted", "op_return"])
+def test_ccc_whitelist(output, setup_ccc, ccc_ms_setup,
                        bitcoind, settings_set, policy_sign,
                        bitcoind_create_watch_only_wallet):
 
@@ -682,10 +682,8 @@ def test_ccc_whitelist(whitelist_ok, setup_ccc, ccc_ms_setup,
         "bcrt1q3ylr55pk7rl0rc06d8th7h25zmcuvvg8wt0yl3",
     ]
 
-    if whitelist_ok:
-        send_to = whitelist[0]
-    else:
-        send_to = bitcoind.supply_wallet.getnewaddress()
+    send_to = (whitelist[0] if output != "unlisted"
+               else bitcoind.supply_wallet.getnewaddress())
 
     setup_ccc(whitelist=whitelist, vel="Unlimited")
     _, target_mi = ccc_ms_setup()
@@ -695,11 +693,15 @@ def test_ccc_whitelist(whitelist_ok, setup_ccc, ccc_ms_setup,
     bitcoind.supply_wallet.sendtoaddress(address=multi_addr, amount=5.0)
     bitcoind.supply_wallet.generatetoaddress(1, bitcoind.supply_wallet.getnewaddress())
     # create funded PSBT
+    outputs = [{send_to: 1}]
+    if output == "op_return":
+        outputs.append({"data": "00"})
     psbt_resp = bitcoind_wo.walletcreatefundedpsbt(
-        [], [{send_to: 1}], 0, {"fee_rate": 2}
+        [], outputs, 0, {"fee_rate": 2}
     )
     psbt = psbt_resp.get("psbt")
-    policy_sign(bitcoind_wo, psbt, violation=None if whitelist_ok else "whitelist")
+    policy_sign(bitcoind_wo, psbt,
+                violation=None if output == "allowed" else "whitelist")
 
 
 @pytest.mark.bitcoind

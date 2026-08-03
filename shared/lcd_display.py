@@ -750,7 +750,7 @@ class Display:
             # With fancy display, no address, even classic can fit in single line,
             # so always split nicely in middle and at mod4
             hh = len(msg) // 2
-            if hh <= 20:
+            if hh <= 21:
                 hh = (hh + 3) & ~0x3
                 parts = [msg[0:hh], msg[hh:]]
                 num_lines = 2

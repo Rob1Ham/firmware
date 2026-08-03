@@ -212,6 +212,7 @@ class SensitiveValues:
         if secret is not None:
             # sometimes we already know the secret
             self.secret = secret
+            self.spots.append(self.secret)
             self.deltamode = False
 
             self.mode, self.raw, self.node = SecretStash.decode(self.secret, self._bip39pw)

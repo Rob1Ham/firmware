@@ -170,6 +170,9 @@ async def xor_all_done(data):
                     continue
             import_xor_parts.clear()          # concern: we are contaminated w/ secrets
         elif chk_words and ch == KEY_QR:
+            if not await ux_confirm('The next screen will show the complete XOR-combined seed phrase in a QR code.'
+                                    '\n\nAnyone with knowledge of those words can control all funds in this wallet.'):
+                continue
             rv = encode_seed_qr(chk_words)
             await show_qr_code(rv, True, msg="SeedQR", is_secret=True)
             continue

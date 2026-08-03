@@ -1777,8 +1777,7 @@ class psbtObject(psbtProxy):
             if k in prevouts:
                 raise FatalPSBTIssue("Duplicate inputs")
 
-            if len(prevouts) < 100:
-                prevouts.add(k)
+            prevouts.add(k)
 
             inp = self.inputs[i]
             if inp.fully_signed:

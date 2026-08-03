@@ -620,7 +620,7 @@ class ApproveTransaction(UserAuthorizedAction):
                 gc.collect()
                 CCCFeature.sign_psbt(self.psbt)
 
-            if SSSPFeature.is_enabled():
+            elif SSSPFeature.is_enabled():
                 # capture new min-height for velocity limit
                 SSSPFeature.update_last_signed(self.psbt)
 

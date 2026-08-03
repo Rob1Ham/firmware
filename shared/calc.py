@@ -86,6 +86,9 @@ Example Commands:
             elif re_prefix.match(ln) and (len(ln) <= 7):
                 # show words
                 ans = pa.prefix_words(ln[:-1].encode())
+            elif pa.attempts_left:
+                # Do not evaluate arbitrary expressions before PIN authentication.
+                ans = None
             else:
                 if any((b in ln) for b in blacklist):
                     ans = None

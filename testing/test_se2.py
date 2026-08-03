@@ -695,6 +695,24 @@ def test_deltamode_validate(true_pin, fake_pin, is_prob, expect_arg, sim_exec):
         print("REMINDER: Restart simulator to reset state!?")
         raise
 
+
+def test_deltamode_restore_recomputes_arg(sim_exec):
+    true_pin = sim_exec('RV.write(pa.pin)')
+    last_digit = str((int(true_pin[-1]) + 1) % 10)
+    fake_pin = true_pin[:-1] + last_digit
+
+    cmd = f'from trick_pins import tp, TC_DELTA_MODE, validate_delta_pin; '\
+          f'tp.restore_backup({{{fake_pin!r}: (0, TC_DELTA_MODE, 0xffff)}}); '\
+          f'b, s = tp.get_by_pin({fake_pin!r}); '\
+          f'RV.write(repr((s.slot_num, s.tc_arg, validate_delta_pin({true_pin!r}, {fake_pin!r})[1])))'
+    slot_num, restored_arg, expected_arg = eval(sim_exec(cmd))
+
+    try:
+        assert restored_arg == expected_arg
+        assert restored_arg != 0xffff
+    finally:
+        sim_exec(f'tp.clear_slots([{slot_num}]); tp.forget_pin({fake_pin!r})')
+
 from test_change_pins import change_pin, goto_pin_options, my_enter_pin
 
 @pytest.fixture(scope='function')

@@ -133,16 +133,12 @@ class ApproveMessageSign(UserAuthorizedAction):
     def __init__(self, text, subpath, addr_fmt, approved_cb=None,
                  msg_sign_request=None, only_printable=True, privkey=None):
         super().__init__()
-        is_json = False
-
         from msgsign import validate_text_for_signing, parse_msg_sign_request
 
         if msg_sign_request:
-            text, subpath, addr_fmt, is_json = parse_msg_sign_request(msg_sign_request)
+            text, subpath, addr_fmt, _ = parse_msg_sign_request(msg_sign_request)
 
-        self.text = validate_text_for_signing(
-            text, only_printable=not is_json and only_printable
-        )
+        self.text = validate_text_for_signing(text, only_printable=only_printable)
         self.subpath = cleanup_deriv_path(subpath)
         self.addr_fmt = chains.parse_addr_fmt_str(addr_fmt)
         self.approved_cb = approved_cb

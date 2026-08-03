@@ -413,7 +413,7 @@ async def ux_sign_msg(txt, approved_cb=None, kill_menu=True):
         if subpath is None: return
 
         await approve_msg_sign(text, subpath, af, approved_cb=approved_cb,
-                               kill_menu=kill_menu, only_printable=False)
+                               kill_menu=kill_menu)
 
     # pick address format
     rv = [

@@ -467,32 +467,6 @@ def sign_using_nfc(goto_home, pick_menu_item, nfc_write_text, cap_story, press_s
     return doit
 
 
-@pytest.mark.bitcoind
-@pytest.mark.parametrize("way", ["nfc", "sd"])
-@pytest.mark.parametrize("msg", ['test\ttest', "\n\n\tmsg\n\n\tsigning"])
-def test_sign_msg_with_ascii_non_printable_chars(msg, way, sign_on_microsd, addr_vs_path,
-                                                 settings_set, bitcoind, sign_using_nfc):
-    # only works with the JSON format
-    settings_set("chain", "XTN")
-    if way == "sd":
-        sig, addr, ret_msg = sign_on_microsd(msg, "", None, use_json=True)
-    else:
-        sig, addr, ret_msg = sign_using_nfc(msg, "", None, use_json=True)
-
-    assert ret_msg == msg
-    raw = b64decode(sig)
-    assert 40 <= len(raw) <= 65
-
-    addr_fmt = AF_CLASSIC
-    path = default_derivation_by_af(addr_fmt, testnet=True)
-
-    # check expected addr was used
-    addr_vs_path(addr, path, addr_fmt)
-    assert verify_message(addr, sig, msg) is True
-    res = bitcoind.rpc.verifymessage(addr, sig, msg)
-    assert res is True
-
-
 @pytest.mark.parametrize('msg,subpath,addr_fmt,concern,no_file,no_json', [
     ('', "m", AF_CLASSIC, 'too short', 0, 0),  # zero length not supported
     ('a'*1000, "m/1", AF_P2WPKH,'too long', 1, 0),  # too big, won't even be offered as a file
@@ -508,15 +482,14 @@ def test_sign_msg_with_ascii_non_printable_chars(msg, way, sign_on_microsd, addr
     ("coinkite ", "m", AF_CLASSIC, "trailing space(s)", 0, 0),  # invalid msg - trailing space
     (" coinkite", "m", AF_P2WPKH_P2SH, "leading space(s)", 0, 0),  # invalid msg - leading space
     ('testêtest', "m", AF_P2WPKH, "must be ascii", 0, 0),
-    # below works only with the JSON format
-    ('test\ttest', "m", AF_CLASSIC, "must be ascii printable", 0, 1),
+    ('test\ttest', "m", AF_CLASSIC, "must be ascii printable", 0, 0),
+    ('test\x01test', "m", AF_CLASSIC, "must be ascii printable", 0, 0),
 ])
 @pytest.mark.parametrize("use_json", [True, False])
 @pytest.mark.parametrize('transport', ['sd', 'usb', 'nfc'])
 def test_sign_msg_fails(dev, sign_on_microsd, msg, subpath, addr_fmt, concern,
                         no_file, no_json, transport, sign_using_nfc, use_json):
     if use_json and no_json:
-        # special cases with ascii non printable characters - can be present in json
         raise pytest.skip("json can contain ASCII non-printable in msg")
     if transport == 'usb':
         with pytest.raises(CCProtoError) as ee:

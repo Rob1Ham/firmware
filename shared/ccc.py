@@ -949,34 +949,12 @@ async def modify_ccc_settings():
     # but if you can prove you have C key, then it's harmless to allow changes
     # since you could just spend as needed.
 
-    enc = CCCFeature.get_encoded_secret()
-    bypass = False
+    ch = await ux_show_story(
+        "Spending policy cannot be viewed, changed nor disabled, "
+        "unless you have the seed words for key C.",
+        title="CCC Enabled")
 
-    from seed import in_seed_vault
-    if in_seed_vault(enc):
-        # If seed vault enabled and they have the key C in there already, just go
-        # directly into menu (super helpful for debug/setup/testing time). We do warn tho.
-        await ux_show_story('''You have a copy of the CCC key C in the Seed Vault, so \
-you may proceed to change settings now.\n\nYou must delete that key from the vault once \
-setup and debug is finished, or all benefit of this feature is lost!''', title='REMINDER')
-
-        bypass = True
-
-    else:
-        ch = await ux_show_story(
-            "Spending policy cannot be viewed, changed nor disabled, "
-            "unless you have the seed words for key C.",
-            title="CCC Enabled")
-
-        if ch != 'y': return
-
-    if bypass:
-        # doing full decode cycle here for better testing
-        chk, raw, _ = SecretStash.decode(enc)
-        assert chk == 'words'
-        words = bip39.b2a_words(raw).split(' ')
-        await key_c_challenge(words)
-        return
+    if ch != 'y': return
 
     # small info-leak here: exposing 12 vs 24 words, but we expect most to be 12 anyway
     nwords = CCCFeature.get_num_words()

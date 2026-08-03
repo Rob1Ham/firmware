@@ -377,18 +377,12 @@ def enter_enabled_ccc(goto_ccc_menu, pick_menu_item, cap_story, press_select, is
         goto_ccc_menu()
         time.sleep(.1)
         title, story = cap_story()
-        if seed_vault:
-            assert "You have a copy of the CCC key C in the Seed Vault" in story
-            assert "You must delete that key from the vault once setup and debug is finished" in story
-            assert "or all benefit of this feature is lost!" in story
-            press_select()
-        else:
-            assert title == "CCC Enabled"
-            assert "policy cannot be viewed, changed" in story
-            assert "unless you have the seed words for key C" in story
-            press_select()
-            time.sleep(.1)
-            word_menu_entry(c_words)
+        assert title == "CCC Enabled"
+        assert "policy cannot be viewed, changed" in story
+        assert "unless you have the seed words for key C" in story
+        press_select()
+        time.sleep(.1)
+        word_menu_entry(c_words)
 
     return doit
 

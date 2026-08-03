@@ -150,7 +150,7 @@ assets/q1_screens.c: assets/Makefile assets/*.png assets/convert.py
 ae.o: ae_config.h
 
 ae_config.h: keylayout.py secel_config.py
-	python3 ./keylayout.py
+	python3 $<
 
 dfu-slow: $(TARGET_NAME).dfu
 	dfu-util -d 0483:df11 -a 0 -D $<

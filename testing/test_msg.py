@@ -543,6 +543,11 @@ def test_sign_msg_fails(dev, sign_on_microsd, msg, subpath, addr_fmt, concern,
     assert concern in story
 
 
+def test_sign_msg_rejects_non_string_json_subpath(sign_on_microsd):
+    story = sign_on_microsd("coinkite", 84, expect_fail=True, use_json=True)
+    assert story.startswith("Problem: Invalid subpath")
+
+
 @pytest.mark.parametrize('msg,num_iter,expect', [ 
     ('Test2', 1, 'IHra0jSywF1TjIJ5uf7IDECae438cr4o3VmG6Ri7hYlDL+pUEXyUfwLwpiAfUQVqQFLgs6OaX0KsoydpuwRI71o='),
     ('Test', 2, 'IDgMx1ljPhLHlKUOwnO/jBIgK+K8n8mvDUDROzTgU8gOaPDMs+eYXJpNXXINUx5WpeV605p5uO6B3TzBVcvs478='),

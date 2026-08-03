@@ -282,6 +282,7 @@ def validate_text_for_signing(text, only_printable=True):
     return result
 
 def addr_fmt_from_subpath(subpath):
+    assert subpath is None or isinstance(subpath, str), "Invalid subpath"
     if not subpath:
         af = "p2pkh"
     elif subpath[:4] == "m/84":

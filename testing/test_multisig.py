@@ -1297,6 +1297,8 @@ def fake_ms_txn(pytestconfig):
             psbt.txn_version = 2
             psbt.input_count = num_ins
             psbt.output_count = num_outs
+            if lock_time:
+                psbt.fallback_locktime = lock_time
 
         txn = CTransaction()
         txn.nVersion = 2
@@ -1363,17 +1365,17 @@ def fake_ms_txn(pytestconfig):
                 psbt.inputs[i].witness_utxo = supply.vout[-1].serialize()
 
             supply.calc_sha256()
-            if psbt_v2:
-                psbt.inputs[i].previous_txid = supply.hash
-                psbt.inputs[i].prevout_idx = 0
-                # TODO sequence
-                # TODO height timelock
-                # TODO time timelock
-
             if lock_time and not i:
                 seq = 0xfffffffd
             else:
                 seq = 0xffffffff
+
+            if psbt_v2:
+                psbt.inputs[i].previous_txid = supply.hash
+                psbt.inputs[i].prevout_idx = 0
+                psbt.inputs[i].sequence = seq
+                # TODO height timelock
+                # TODO time timelock
 
             spendable = CTxIn(COutPoint(supply.sha256, 0), nSequence=seq)
             txn.vin.append(spendable)

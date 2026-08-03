@@ -353,7 +353,13 @@ async def kt_accept_values(dtype, raw):
         vals = text_bk_parser(raw)
         assert vals         # empty?
 
-        raw_sec, _ = extract_raw_secret(vals)
+        try:
+            raw_sec, _ = extract_raw_secret(vals)
+        except Exception as e:
+            await ux_show_story('Unable to decode raw_secret and '
+                                'restore the seed value!\n\n\n' + str(e),
+                                title='FAILED')
+            return
 
         from flow import has_secrets
 

@@ -106,7 +106,10 @@ class SpendingPolicy(dict):
                 # this is unix timestamp - not allowed - fail
                 raise SpendPolicyViolation("nLockTime not height")
 
-            block_h = pol.get("block_h", chains.current_chain().ccc_min_block)
+            # vel_block_h was used by older CCC policies. Honour that checkpoint
+            # until the next successful signing persists it under the new name.
+            block_h = pol.get("block_h", pol.get("vel_block_h",
+                                                  chains.current_chain().ccc_min_block))
             if psbt.lock_time <= block_h:
                 raise SpendPolicyViolation("rewound (%d)" % psbt.lock_time)
 
@@ -151,7 +154,7 @@ class SpendingPolicy(dict):
         # - might add other things besides height here someday
         LastFailReason.clear()
 
-        old_h = self.get('block_h', 1)
+        old_h = self.get('block_h', self.get('vel_block_h', 1))
 
         if old_h < psbt.lock_time < NLOCK_IS_TIME:
             # always update last block height, even if velocity isn't enabled yet

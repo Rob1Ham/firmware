@@ -643,8 +643,13 @@ class SPAddrWhitelist(MenuSystem):
                     ln = 'Got %d so far. ENTER to apply.' % len(got)
 
         if got:
-            # import them
-            await self.add_addresses(got)
+            # QR contents are hostile input: show every destination and require
+            # explicit approval before changing the signing policy.
+            msg = "Add %d address%s to whitelist?\n\n%s" % (
+                    len(got), '' if len(got) == 1 else 'es',
+                    '\n\n'.join(show_single_address(a) for a in got))
+            if await ux_confirm(msg, title="Review QR Import"):
+                await self.add_addresses(got)
 
     async def maxed_out(self, *a):
         await ux_show_story("Max %d items in whitelist. Please make room first." % MAX_WHITELIST)

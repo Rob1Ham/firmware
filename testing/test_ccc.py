@@ -323,6 +323,14 @@ def setup_ccc(goto_ccc_menu, pick_menu_item, cap_story, press_select, pass_word_
                         assert False, "updating whitelist failed"
 
                 press_select()
+
+                time.sleep(.1)
+                title, story = cap_story()
+                assert title == "Review QR Import"
+                assert "to whitelist?" in story
+                for addr in whitelist:
+                    assert addr in story
+                press_select()
             else:
                 assert "Scan QR" not in m
                 fname = "ccc_addrs.txt"

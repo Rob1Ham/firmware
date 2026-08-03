@@ -86,7 +86,7 @@ gpio_setup(void)
     // TURN OFF: PC0
     // SD mux: PC13
     {   GPIO_InitTypeDef setup = {
-            .Pin = GPIO_PIN_7 | GPIO_PIN_6 | GPIO_PIN_0, GPIO_PIN_13,
+            .Pin = GPIO_PIN_7 | GPIO_PIN_6 | GPIO_PIN_0 | GPIO_PIN_13,
             .Mode = GPIO_MODE_OUTPUT_PP,
             .Pull = GPIO_NOPULL,
             .Speed = GPIO_SPEED_FREQ_LOW,
@@ -101,7 +101,7 @@ gpio_setup(void)
     // Port C - Inputs
     // SD card detect switch: PC1 battery/not
     {   GPIO_InitTypeDef setup = {
-            .Pin = GPIO_PIN_13 | GPIO_PIN_1,
+            .Pin = GPIO_PIN_1,
             .Mode = GPIO_MODE_INPUT,
             .Pull = GPIO_PULLUP,
             .Speed = GPIO_SPEED_FREQ_LOW,

@@ -744,7 +744,7 @@ def test_wif_store_signing_with_master(fake_txn, start_sign, end_sign, cap_story
 ])
 @pytest.mark.parametrize("testnet", [True, False])
 def test_visualize_wif(wif, testnet, is_q1, goto_home, need_keypress, use_testnet, use_mainnet,
-                       scan_a_qr, cap_story, settings_remove, press_select):
+                       scan_a_qr, cap_story, settings_remove, settings_set, press_select):
     if not is_q1:
         raise pytest.skip("need scanner")
 
@@ -801,5 +801,17 @@ def test_visualize_wif(wif, testnet, is_q1, goto_home, need_keypress, use_testne
     assert title == "Failure"
     assert "Already saved in WIF Store" in story
     press_select()
+
+    # A full store must reject a new key imported through the QR shortcut.
+    settings_set("wifs", [("pub%d" % i, "priv%d" % i) for i in range(30)])
+    goto_home()
+    need_keypress(KEY_QR)
+    scan_a_qr(make_fake_wif(239 if testnet else 128))
+    time.sleep(1)
+    need_keypress("1")
+    time.sleep(.1)
+    title, story = cap_story()
+    assert title == "Failure"
+    assert "Max 30 items allowed in WIF Store" in story
 
 # EOF

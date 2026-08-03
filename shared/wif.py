@@ -63,6 +63,11 @@ async def ux_visualize_wif(wif_str, kp, compressed, testnet):
             await ux_show_story("Already saved in WIF Store.", title="Failure")
             return
 
+        if len(saved) >= WIFStore.MAX_ITEMS:
+            await ux_show_story("Max %d items allowed in WIF Store." % WIFStore.MAX_ITEMS,
+                                title="Failure")
+            return
+
         saved.append((pk, sk))
         settings.set('wifs', saved)
         settings.save()

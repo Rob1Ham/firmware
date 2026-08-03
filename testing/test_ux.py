@@ -858,7 +858,7 @@ def test_q1_seed_word_entry_bug(word_menu_entry, unit_test, pick_menu_item,
 
 
 def test_custom_pushtx_url(goto_home, pick_menu_item, press_select, enter_complex,
-                           cap_story, cap_menu, settings_remove, need_keypress,
+                           cap_story, cap_menu, settings_set, settings_remove, need_keypress,
                            press_cancel, is_q1, settings_get, OK):
     goto_home()
     settings_remove('ptxurl')  # empty slate
@@ -956,6 +956,16 @@ def test_custom_pushtx_url(goto_home, pick_menu_item, press_select, enter_comple
     press_select()
     time.sleep(.1)
     assert settings_get('ptxurl', None) is None
+
+    # A malformed URL can arrive via legacy or restored settings. It must not
+    # prevent the settings menu from rendering so the user can replace it.
+    settings_set('ptxurl', 'bad')
+    goto_home()
+    pick_menu_item("Settings")
+    pick_menu_item("NFC Push Tx")
+    time.sleep(.1)
+    assert "Custom URL..." in cap_menu()
+    settings_remove('ptxurl')
 
 
 @pytest.mark.parametrize("fname,ftype", [

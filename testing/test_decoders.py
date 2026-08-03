@@ -98,6 +98,18 @@ def test_detector_url(url, bip21, try_decode):
         assert not xargs
 
 
+@pytest.mark.parametrize('amount, expected', [
+    ('1.1', '1.10000000 BTC'),
+    ('0.3', '0.30000000 BTC'),
+    ('50', '50.00000000 BTC'),
+    ('0.00000001', '0.00000001 BTC'),
+])
+def test_bip21_amount_formatting(amount, expected, sim_exec):
+    cmd = "from ux_q1 import _format_bip21_amount; " + \
+          f"RV.write(_format_bip21_amount({amount!r}))"
+    assert sim_exec(cmd) == expected
+
+
 @pytest.mark.parametrize('num_words', [12, 18, 24])
 @pytest.mark.parametrize('encoding', ['short', 'long', 'seed_qr'])
 @pytest.mark.parametrize('case', range(2))

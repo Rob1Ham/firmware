@@ -54,11 +54,20 @@ class SpendingPolicy(dict):
 
         if pol_dict is not None:
             self.clear()
-            self.update(pol_dict.items())
+            self.update(self._normalize_policy(pol_dict).items())
         else:
             v = dict(settings.master_get(self.nvkey, {})).get('pol', None)
             if v is not None:
-                self.update(v.items())      # mpy bugfix, when called with SpendingPolicy
+                self.update(self._normalize_policy(v).items())      # mpy bugfix, when called with SpendingPolicy
+
+    @staticmethod
+    def _normalize_policy(pol):
+        # Backwards-compatibility for whitelist key rename: addr -> addrs.
+        # If both exist, retain addrs as authoritative.
+        rv = dict(pol)
+        if 'addrs' not in rv and 'addr' in rv:
+            rv['addrs'] = list(rv['addr'])
+        return rv
             
 
     def _save_policy(self, master_only=True):

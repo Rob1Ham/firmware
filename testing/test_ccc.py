@@ -736,6 +736,12 @@ def test_ccc_velocity(velocity_mi, setup_ccc, ccc_ms_setup, bitcoind, settings_s
 
     assert settings_get("ccc")["pol"]["block_h"] == init_block_height
 
+    # Simulate an upgrade from firmware that persisted the velocity checkpoint
+    # under its former name. The old height must continue to limit signing.
+    ccc = settings_get("ccc")
+    ccc["pol"]["vel_block_h"] = ccc["pol"].pop("block_h")
+    settings_set("ccc", ccc)
+
     # mine some, BUT not enough to satisfy velocity policy
     # - check velocity is exactly right to block number vs. required gap
     bitcoind.supply_wallet.generatetoaddress(blocks - 1, bitcoind.supply_wallet.getnewaddress())
@@ -747,7 +753,9 @@ def test_ccc_velocity(velocity_mi, setup_ccc, ccc_ms_setup, bitcoind, settings_s
     assert po.parsed_txn.nLockTime == block_height
     policy_sign(bitcoind_wo, psbt, violation="velocity")
 
-    assert settings_get("ccc")["pol"]["block_h"] == init_block_height  # still initial block height as above failed
+    legacy_pol = settings_get("ccc")["pol"]
+    assert "block_h" not in legacy_pol
+    assert legacy_pol["vel_block_h"] == init_block_height  # unchanged because signing failed
 
     # mine the remaining one block to satisfy velocity policy
     bitcoind.supply_wallet.generatetoaddress(1, bitcoind.supply_wallet.getnewaddress())

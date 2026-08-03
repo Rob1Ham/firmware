@@ -57,7 +57,7 @@ async def scan_and_bag(*a):
         if not got:
             return
 
-        if not got.isdigit() or not (8 <= len(got) <= 32):
+        if not got.isdigit() or not (8 <= len(got) < 32):
             # bad scan/not a bag
             await ux_show_story(got, "Bad Scan")
             continue

@@ -578,6 +578,8 @@ async def restore_complete(fname_or_fd, temporary=False, words=True, usb=False):
         if usb:
             # we're not originating from a menu
             words = await seed.WordNestMenu.get_n_words(12)
+            if len(words) != num_pw_words:
+                return
             await done(words)
         else:
             m = seed.WordNestMenu(num_words=num_pw_words, has_checksum=False, done_cb=done)

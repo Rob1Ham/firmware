@@ -183,6 +183,23 @@ def get_last_violation(settings_get):
         return settings_get('lfr')
     return doit
 
+
+def test_cancel_magnitude_keeps_policy(setup_ccc, pick_menu_item, press_cancel,
+                                       press_select, cap_story, settings_get, is_q1):
+    setup_ccc(mag=2)
+
+    pick_menu_item("Max Magnitude")
+    press_cancel()
+    if not is_q1:
+        # On the Mk4, X first erases the existing digit and then cancels.
+        press_cancel()
+
+    title, story = cap_story()
+    assert title == "TX Magnitude"
+    assert "Did not change" in story
+    assert settings_get("ccc")["pol"]["mag"] == 2
+    press_select()
+
 _skip_quiz = False
 
 @pytest.fixture

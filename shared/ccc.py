@@ -748,7 +748,6 @@ class SpendingPolicyMenu(MenuSystem):
         val = await ux_enter_number('Transaction Max:', max_value=int(1e8),
                                     value=(was or ''))
 
-        args = dict(mag=val)
         if (val is None) or (val == was):
             msg = "Did not change"
             val = was
@@ -756,6 +755,7 @@ class SpendingPolicyMenu(MenuSystem):
             msg = "You have set the"
             unchanged = False
 
+        args = dict(mag=val)
         if not val:
             msg = "No check for maximum transaction size will be done. "
             if self.policy.get('vel', 0):

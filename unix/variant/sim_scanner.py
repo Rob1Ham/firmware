@@ -48,7 +48,7 @@ class SimulatedQRScanner(QRScanner):
                 continue
 
             print("Got new QR scan data from file.")
-            for ln in open(DATA_FILE, 'rb').readlines():
+            for ln in open(DATA_FILE, 'rb').read(8196).splitlines(True):
                 self._q.put_nowait(ln)
 
             orig_mtime = mtime

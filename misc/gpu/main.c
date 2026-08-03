@@ -91,15 +91,6 @@ i2c_setup(void)
     }
 }
 
-// enter_bootloader()
-//
-    void
-enter_bootloader(void)
-{
-    // Force entry into bootloader on next reset
-    SET_BIT(FLASH->ACR, FLASH_ACR_PROGEMPTY);
-}
-
 // i2c_poll()
 //
     void
@@ -152,13 +143,6 @@ i2c_poll(void)
                 case 'p':       // ping
                     resp = (const char *)args;
                     respLen = argLen;
-                    break;
-
-                case 'b':       // enter bootloader (follow w/ hard reset)
-                    if(argLen != 0) goto bad_args;
-                    enter_bootloader();
-                    resp = "OK";
-                    respLen = 3;
                     break;
 
                 case 'c':       // enable cursor: args=x,y,ctype

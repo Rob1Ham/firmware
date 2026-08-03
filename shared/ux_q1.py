@@ -1104,6 +1104,17 @@ async def ux_visualize_txn(bin_txn):
     await ux_show_story(msg, title="Signed Transaction")
 
 
+def _format_bip21_amount(amt):
+    # BIP-21 amounts are decimal BTC, with at most eight decimal places.
+    whole, sep, frac = amt.partition('.')
+    if not whole or not whole.isdigit():
+        raise ValueError('invalid BIP-21 amount')
+    if sep and (not frac or not frac.isdigit() or len(frac) > 8):
+        raise ValueError('invalid BIP-21 amount')
+
+    return '%d.%s BTC' % (int(whole), frac + ('0' * (8 - len(frac))))
+
+
 async def ux_visualize_bip21(proto, addr, args):
     # Show details of BIP-21 URL
     # - imho, a bare address is a valid BIP-21 URL so we come here too
@@ -1117,10 +1128,7 @@ async def ux_visualize_bip21(proto, addr, args):
         msg += 'Amount: '
         try:
             amt = args.pop('amount')
-            whole, frac = amt.split('.', 1)
-            frac = int(frac) if frac else 0
-            whole = int(whole) if whole else 0
-            msg += '%d.%08d BTC\n' % (whole, frac)
+            msg += _format_bip21_amount(amt) + '\n'
         except:
             msg += '(corrupt)\n'
 

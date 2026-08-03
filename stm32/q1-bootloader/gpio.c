@@ -164,6 +164,7 @@ gpio_setup(void)
 
         // G_BUSY: input, pull down
         setup.Pin = PIN_G_BUSY;
+        setup.Mode = GPIO_MODE_INPUT;
         setup.Pull = GPIO_PULLDOWN;
         HAL_GPIO_Init(GPIOE, &setup);
 

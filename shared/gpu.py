@@ -140,8 +140,8 @@ class GPUAccess:
         self.g_reset(1)
 
     def enter_bl(self):
-        # Get it into bootloader. Reliable. Still allows SWD to work.
-        # XXX doesn't seem to work anymore?
+        # Get it into bootloader using the dedicated BOOT0 and reset signals.
+        # Do not expose this transition through the GPU's normal I2C commands.
         self.g_reset(0)
         g_boot0 = Pin('G_BUSY', mode=Pin.OUT_PP, value=1)
         self.g_reset(1)
@@ -199,10 +199,9 @@ class GPUAccess:
         return self.i2c.readfrom(GPU_ADDR, expect_len)
 
     def goto_bootloader(self):
-        # switch working GPU code into bootloader mode
-        resp = self.cmd_resp(b'b', 2)
-        assert resp == b'OK'
-        self.reset()
+        # Enter through the dedicated hardware signals, not an unauthenticated
+        # command on the GPU's normal I2C slave address.
+        self.enter_bl()
         utime.sleep_ms(100)
 
     def get_version(self):

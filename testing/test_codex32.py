@@ -29,6 +29,11 @@ SHARES = [
 
 CW_SHARES = [Share.from_seed(bytes(range(size)), 'cw', 'test', SECRET, 2, 1).to_string()
              for size in (16, 24, 32)]
+MS_INTERMEDIATE = [
+    'ms10seedsqqqsyqcyq5rqwzqfpg9scrgwpugpzysn9vaqzzvs20xnl',
+    'ms10seedsyqsjygeyy5nzw2pf9g4jctfw9ucrzv3nxs6nvdau84gz0632s0xs',
+    'ms10seedsgpq5ys6yg4rywjzfff95cn2wfag9z5jn2324v46ct9d9hrcduqw8c3lccl',
+]
 CW_SHARE_A = Share.from_seed(bytes(range(16)), 'cw', 'test', 'a', 2, 3).to_string()
 
 IMPORT_SHARES = [
@@ -339,6 +344,9 @@ def test_calculate_checksum_full_share(text, goto_codex32_menu, pick_menu_item,
     checksum_len = 15 if len(text) == 127 else 13
     enter_bech32(' '.join(text.lower()[i:i+4] for i in range(0, len(text), 4)))
     time.sleep(.2)
+    if text[:3].lower() in ('cw1', 'ms1') and len(text) in (48, 54, 61):
+        assert cap_story()[0] == 'CHECK LENGTH'
+        press_select()  # Validate the complete input, not a longer body.
     title, story = cap_story()
     assert title == "Share '%s'" % text[8].upper()
     assert 'Checksum:\n\n' + text[-checksum_len:].upper() in story
@@ -347,6 +355,60 @@ def test_calculate_checksum_full_share(text, goto_codex32_menu, pick_menu_item,
     press_cancel()
     time.sleep(.2)
     assert ('Calculate Checksum' if is_q1 else 'Calc Checksum') in cap_menu()
+
+
+@pytest.mark.parametrize('short_size,long_size', [(16, 24), (20, 28), (24, 32)])
+def test_calculate_checksum_ms_complete_length_requires_confirmation(
+        short_size, long_size, goto_codex32_menu, pick_menu_item, cap_story,
+        press_cancel, press_select, enter_bech32, need_keypress, active_secret, is_q1):
+    before = active_secret()
+    shorter = Share.from_seed(bytes(range(short_size)), 'ms', 'test', SECRET, 0).to_string()
+    damaged = shorter[:-1] + ('Q' if shorter[-1] != 'Q' else 'P')
+    longer = Share.from_seed(bytes(range(long_size)), 'ms', 'test', SECRET, 0).to_string()
+    assert len(damaged) == len(longer[:-13])
+
+    goto_codex32_menu(tmp=True)
+    pick_menu_item('Calculate Checksum' if is_q1 else 'Calc Checksum')
+    need_keypress('0')
+    enter_bech32(damaged)
+    assert cap_story()[0] == 'CHECK LENGTH'
+    assert '%d-bit MS1' % (short_size * 8) in cap_story()[1]
+    press_select()  # Validate as a complete backup, not a longer body.
+    assert cap_story()[0] == 'FAILED'
+    assert active_secret() == before
+    press_select()
+    press_cancel()
+
+
+@pytest.mark.parametrize('size', [24, 28, 32])
+def test_calculate_checksum_longer_ms_body_with_explicit_confirmation(
+        size, goto_codex32_menu, pick_menu_item, cap_story, press_select,
+        press_cancel, enter_bech32, need_keypress, is_q1):
+    share = Share.from_seed(bytes(range(size)), 'ms', 'test', SECRET, 0)
+    goto_codex32_menu(tmp=True)
+    pick_menu_item('Calculate Checksum' if is_q1 else 'Calc Checksum')
+    need_keypress('0')
+    enter_bech32(share.to_string()[:-13])
+    assert cap_story()[0] == 'CHECK LENGTH'
+    need_keypress('1')  # Choose the longer checksum-less body explicitly.
+    assert parse_rendered_codex32(cap_story()[1].split('Codex32:', 1)[1]) == share.to_string()
+    press_cancel()
+
+
+def test_calculate_checksum_valid_short_ms_is_also_longer_body(
+        goto_codex32_menu, pick_menu_item, cap_story, enter_bech32,
+        need_keypress, press_cancel, is_q1):
+    shorter = Share.from_seed(bytes(range(16)), 'ms', 'test', SECRET, 0).to_string()
+    longer = Share.from_body(shorter)
+    assert len(longer.to_seed_and_pad()[0]) == 24
+    goto_codex32_menu(tmp=True)
+    pick_menu_item('Calculate Checksum' if is_q1 else 'Calc Checksum')
+    need_keypress('0')
+    enter_bech32(shorter)
+    assert cap_story()[0] == 'CHECK LENGTH'
+    need_keypress('1')
+    assert parse_rendered_codex32(cap_story()[1].split('Codex32:', 1)[1]) == longer.to_string()
+    press_cancel()
 
 
 @pytest.mark.parametrize('tmp', [False, True])
@@ -815,7 +877,7 @@ def pass_codex32_quiz(cap_story, need_keypress):
     return doit
 
 
-@pytest.mark.parametrize('share', SHARES + CW_SHARES)
+@pytest.mark.parametrize('share', SHARES + MS_INTERMEDIATE + CW_SHARES)
 def test_native_secret_survives_backup(share, set_encoded_secret, sim_exec, get_secrets):
     encoded = native_encoding(share)
     expected = encoded
@@ -840,6 +902,8 @@ def test_native_secret_survives_backup(share, set_encoded_secret, sim_exec, get_
 
 @pytest.mark.parametrize('share,display', [
     *[(share, 'master') for share in SHARES[:3]],
+    *[(Share.from_seed(bytes(range(size)), 'ms', 'test', SECRET, 0).to_string(), 'master')
+      for size in (20, 24, 28)],
     (SHARES[3], 'xprv'),
     *[(share, 'words') for share in CW_SHARES],
 ])
@@ -1220,6 +1284,9 @@ def test_shamir_split_m_of_m_warning_cancel(reset_seed_words, goto_shamir_split,
 @pytest.mark.parametrize('hrp,sec_len,m_n,way,initial_threshold', [
     ('ms', 16, (3, 5), 'sd', 0),
     ('ms', 16, (9, 9), 'nfc', 0),
+    ('ms', 20, (3, 5), 'sd', 0),
+    ('ms', 24, (3, 5), 'sd', 0),
+    ('ms', 28, (3, 5), 'sd', 0),
     ('ms', 32, (3, 5), 'qr', 0),
     ('ms', 32, (9, 9), 'sd', 0),
     ('ms', 64, (3, 5), 'nfc', 0),
@@ -1870,6 +1937,16 @@ def test_import_codex32_vectors(value, unit_test, import_codex32_ui,
     reset_seed_words()
 
 
+@pytest.mark.parametrize('value', MS_INTERMEDIATE)
+def test_import_bip93_intermediate_sizes(value, unit_test, import_codex32_ui,
+                                         expect_ftux, active_secret, reset_seed_words):
+    unit_test('devtest/clear_seed.py')
+    import_codex32_ui('sd', value)
+    expect_ftux()
+    assert active_secret() == native_encoding(value).hex()
+    reset_seed_words()
+
+
 @pytest.mark.parametrize('value', SHARES + CW_SHARES)
 @pytest.mark.parametrize('way,tmp', [
     ('sd', True),
@@ -2000,7 +2077,7 @@ def test_recover_does_not_use_seed_vault(reset_seed_words, settings_set, goto_sh
     reset_seed_words()
 
 
-@pytest.mark.parametrize('size', [24, 48])
+@pytest.mark.parametrize('size', [36, 48])
 def test_shamir_split_unsupported_master_size(size, reset_seed_words, set_encoded_secret,
                                              goto_shamir_split, shamir_split_settings,
                                              cap_story, sim_exec):
@@ -2010,6 +2087,6 @@ def test_shamir_split_unsupported_master_size(size, reset_seed_words, set_encode
     shamir_split_settings(3, 2)
     title, story = cap_story()
     assert title == 'FAILED'
-    assert 'MS1 requires a 128, 256 or 512-bit master seed.' in story
+    assert 'MS1 requires a 128, 160, 192, 224, 256 or 512-bit master seed.' in story
     assert sim_exec('from utils import B2A; RV.write(B2A(pa.fetch()))') == encoded.hex()
     reset_seed_words()

@@ -78,7 +78,7 @@ class SecretStash:
                 nv[0] = 0x80 | ((len(seed) // 8) - 2)
                 nv[1:1+len(seed)] = seed
             else:
-                assert len(seed) in (16, 32, 64)
+                assert len(seed) in (16, 20, 24, 28, 32, 64)
                 nv[0] = len(seed)
                 nv[1:1+len(seed)] = seed
 

@@ -191,7 +191,7 @@ class Share:
         hrp, data_and_checksum = parts
 
         if hrp == MS_HRP:
-            assert len(encoded) in (48, 74, 127), "ms codex32 length"
+            assert len(encoded) in (48, 54, 61, 67, 74, 127), "ms codex32 length"
         elif hrp == CW_HRP:
             assert len(encoded) in (48, 61, 74), "cw codex32 length"
         else:

@@ -107,6 +107,20 @@ assert xprv_from_bip32_seed(v5.to_seed_and_pad()[0]) == \
     'xprv9s21ZrQH143K4UYT4rP3TZVKKbmRVmfRqTx9mG2xCy2JYipZbkLV8rwvBXsUbEv9KQiUD7oED1Wyi9evZzUn2rqK9skRgPkNaAzyw3YrpJN'
 print('Vector 5: OK')
 
+# BIP-93 vectors 6-8: all remaining standardized master-seed sizes.
+for encoded, seed in (
+        ('ms10seedsqqqsyqcyq5rqwzqfpg9scrgwpugpzysn9vaqzzvs20xnl',
+         '000102030405060708090a0b0c0d0e0f10111213'),
+        ('ms10seedsyqsjygeyy5nzw2pf9g4jctfw9ucrzv3nxs6nvdau84gz0632s0xs',
+         '202122232425262728292a2b2c2d2e2f3031323334353637'),
+        ('ms10seedsgpq5ys6yg4rywjzfff95cn2wfag9z5jn2324v46ct9d9hrcduqw8c3lccl',
+         '404142434445464748494a4b4c4d4e4f505152535455565758595a5b')):
+    share = Share.parse(encoded)
+    assert B2A(share.to_seed_and_pad()[0]) == seed
+    assert Share.from_seed(a2b_hex(seed), 'ms', 'seed', SECRET, 0,
+                           share.to_seed_and_pad()[1]).to_string(upper=False) == encoded
+print('Vectors 6-8: OK')
+
 # The unreleased former prefix is not an import alias.
 try:
     Share.parse('cc' + v5.to_string().lower()[2:])
@@ -290,8 +304,8 @@ except AssertionError as exc:
     assert 'padding required for non-secret share' in str(exc)
 print('Non-secret share padding: OK')
 
-# Split 128-, 256- and 512-bit master secrets as 3-of-5 sets.
-for secret_len in (16, 32, 64):
+# Split every BIP-93 master-seed size as a 3-of-5 set.
+for secret_len in (16, 20, 24, 28, 32, 64):
     seed_bytes = ngu.random.bytes(secret_len)
     secret = Share.from_seed(seed_bytes, 'ms', 'cash', SECRET, 3)
     pad_len = (-secret_len * 8) % 5
@@ -347,7 +361,7 @@ for secret_len in (16, 32, 64):
     assert recovered.to_string()[:3] == 'MS1'
 
 # Round-trip serialization/deserialization for MS and CC.
-for secret_len in (16, 32, 64):
+for secret_len in (16, 20, 24, 28, 32, 64):
     seed_bytes = ngu.random.bytes(secret_len)
     original = Share.from_seed(seed_bytes, 'ms', 'k00l', 'c', 3, 0)
     restored = Share.from_seed(original.to_seed_and_pad()[0], 'ms', 'k00l', 'c', 3, 0)

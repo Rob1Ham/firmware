@@ -210,7 +210,7 @@ def main():
     if h.hex() == empty:
         print('WARNING: Input is empty. This is a known wallet\n')
     # Warnings for short length
-    if len(r) < 99:
+    if len(r) < 100:
         ae = 2.585 * len(r)
         print('WARNING: Input is only %d bits of entropy\n' % ae)
 

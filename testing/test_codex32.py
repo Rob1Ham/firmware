@@ -426,7 +426,7 @@ def test_calculate_checksum_damaged_complete_cw_requires_longer_size_confirmatio
     pick_menu_item('Calculate Checksum' if is_q1 else 'Calc Checksum')
     need_keypress('0')
     enter_bech32(damaged)
-    title, story = cap_story()
+    title, story = wait_for_story(cap_story, title='CHECK LENGTH')
     assert title == 'CHECK LENGTH'
     assert 'complete' in story and 'without a checksum' in story
     press_select()  # Validate as a complete share; do not seal damaged data.
@@ -862,6 +862,19 @@ def goto_shamir_recover(goto_codex32_menu, pick_menu_item, cap_story, cap_screen
         press_select()
 
     return doit
+
+
+def wait_for_story(cap_story, title=None, contains=None, timeout=3):
+    """Wait for an asynchronous simulator screen before asserting its contents."""
+    deadline = time.monotonic() + timeout
+    while True:
+        got_title, story = cap_story()
+        if ((title is None or got_title == title)
+                and (contains is None or contains in story)):
+            return got_title, story
+        if time.monotonic() >= deadline:
+            return got_title, story
+        time.sleep(.1)
 
 
 def check_recover_story(story, threshold=None, uid=None, num_collected=0, hrp=None,
@@ -1800,11 +1813,12 @@ def test_derive_codex32_shares(hrp, size, state, threshold, reset_seed_words, un
     press_select()
 
     for pos, share in enumerate(shares):
+        collected_story = wait_for_story(cap_story, contains='Collected: %d' % pos)[1]
         if pos:
-            check_recover_story(cap_story()[1], threshold, 'name', pos, hrp,
+            check_recover_story(collected_story, threshold, 'name', pos, hrp,
                                 indices=[s.index for s in shares[:pos]], is_q1=is_q1)
         else:
-            check_recover_story(cap_story()[1], indices=[], is_q1=is_q1)
+            check_recover_story(collected_story, indices=[], is_q1=is_q1)
         name = 'derive_%s.txt' % share.index
         path = microsd_path(name)
         garbage_collector.append(path)

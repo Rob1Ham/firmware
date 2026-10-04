@@ -4,7 +4,8 @@
 
 All eight PR heads (#62–69) are merged locally on `codex/codex32-e2e`.
 The input pins and build commands are in `codex32-input-manifest.json`; the
-file/function review and finding ledger is `codex32-review-ledger.md`.
+file/function review and finding ledger is `codex32-review-ledger.md`, and the
+reference capability table is `codex32-reference-capabilities.md`.
 The original checkout and review worktrees remain untouched.
 
 The Unix MicroPython simulator and unsigned STM32 MK/Q1 targets compile from
@@ -18,6 +19,10 @@ for the stated capability sets. The simulator's Codex32 MicroPython unit lane
 passed 2/2 on each of Mk4, Mk5 and Q1. A nonheadless Q1 QR capture/decode lane
 passed 4/4 after clearing a stale X11 `DISPLAY` value. Three independent
 save/restart/discard repetitions passed on all three models.
+MK and Q1 key-zero developer/test images and DFU containers were built locally;
+`signit check` verified both signatures and hardware-compatibility fields.
+Signature timestamps and ECDSA nonces make signed bytes vary across builds;
+unsigned compiled sections provide a separate comparison basis.
 
 The first full Codex32 suites exposed a test-fixture error: signature
 verification removed `.sig` files before the fixture checked that they still

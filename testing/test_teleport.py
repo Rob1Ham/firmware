@@ -893,19 +893,24 @@ def test_hobble_limited(set_hobble, scan_a_qr, cap_menu, cap_screen, pick_menu_i
 
     set_hobble(True)
 
+    def assert_kt_blocked():
+        for _ in range(30):
+            screen = cap_screen()
+            lines = [line.strip() for line in screen.splitlines() if line.strip()]
+            if lines and lines[-1] == 'KT Blocked':
+                return
+            time.sleep(.1)
+        pytest.fail('Expected KT Blocked screen, got %r' % screen)
+
     from bbqr import split_qrs
 
     _, parts = split_qrs(b's'*33, 'R')
     rx_complete(parts[0], '12345678', expect_fail=True)
-    time.sleep(.1)
-    last = cap_screen().split('\n')[-1]
-    assert last == 'KT Blocked'
+    assert_kt_blocked()
 
     _, parts = split_qrs(b's'*33, 'S')
     rx_complete(parts[0], 'abcdefgh', expect_fail=True)
-    time.sleep(.1)
-    last = cap_screen().split('\n')[-1]
-    assert last == 'KT Blocked'
+    assert_kt_blocked()
     
     
 

@@ -1,0 +1,285 @@
+{
+  "schema_version": 1,
+  "assessment_date": "2026-10-03",
+  "timezone": "America/Chicago",
+  "scope": "Initial source assessment and follow-up planning; not full firmware qualification",
+  "repository": "https://github.com/Rob1Ham/firmware",
+  "original_checkout": {
+    "branch": "master",
+    "commit": "ca06dfd2509eacfad333be9d35ed274559915d0e",
+    "preexisting_changes": true,
+    "preserve_existing_worktrees": true
+  },
+  "integration_base": {
+    "branch": "review/codex32-base-2026-09-30",
+    "commit": "3e32e32a49c551b35e7bb3cecbf910241f553537"
+  },
+  "upstream_feature": {
+    "pr": "https://github.com/Coldcard/firmware/pull/819",
+    "state": "MERGED",
+    "merged_at": "2026-09-28T13:47:50Z",
+    "merge_commit": "571f0338301b4d91d07dba64a63ccf5424d16edb",
+    "ancestor_of_integration_base": true
+  },
+  "pull_requests": [
+    {
+      "number": 62,
+      "url": "https://github.com/Rob1Ham/firmware/pull/62",
+      "branch": "review/codex32-checksum-input",
+      "head": "7d04ee3f6624d150209fa9965700b3e76171911a",
+      "commits": [
+        "9dfb9c5253039d9414943af8e8f144466e1fa8d2",
+        "91b38eea25aaa874061d2545a19f6f31fd326adb",
+        "7d04ee3f6624d150209fa9965700b3e76171911a"
+      ],
+      "state": "OPEN",
+      "reported_status_checks": []
+    },
+    {
+      "number": 63,
+      "url": "https://github.com/Rob1Ham/firmware/pull/63",
+      "branch": "review/codex32-recovery-identity",
+      "head": "ee38283522984081d2e9b848efd790bc2e41e975",
+      "commits": [
+        "ee38283522984081d2e9b848efd790bc2e41e975"
+      ],
+      "state": "OPEN",
+      "reported_status_checks": []
+    },
+    {
+      "number": 64,
+      "url": "https://github.com/Rob1Ham/firmware/pull/64",
+      "branch": "review/codex32-all-bip93-sizes",
+      "head": "517bd933eb1a7d79e8d66412badf28e18aa40aa6",
+      "commits": [
+        "28b39d427e6e00dbaa03c7ed8cffc2e5e66a2784",
+        "d95352b34b34a1c87d8e3cd90fe45ee45b2e4d72",
+        "517bd933eb1a7d79e8d66412badf28e18aa40aa6"
+      ],
+      "state": "OPEN",
+      "reported_status_checks": []
+    },
+    {
+      "number": 65,
+      "url": "https://github.com/Rob1Ham/firmware/pull/65",
+      "branch": "review/codex32-protect-pending",
+      "head": "49bdc723d9a5ee9ddadab7e989f9917e247cf0b0",
+      "commits": [
+        "49bdc723d9a5ee9ddadab7e989f9917e247cf0b0"
+      ],
+      "state": "OPEN",
+      "reported_status_checks": []
+    },
+    {
+      "number": 66,
+      "url": "https://github.com/Rob1Ham/firmware/pull/66",
+      "branch": "review/codex32-recovery-state",
+      "head": "698811ad0adb9f1a41c4dd7ec971097d4959f002",
+      "commits": [
+        "698811ad0adb9f1a41c4dd7ec971097d4959f002"
+      ],
+      "state": "OPEN",
+      "reported_status_checks": []
+    },
+    {
+      "number": 67,
+      "url": "https://github.com/Rob1Ham/firmware/pull/67",
+      "branch": "review/codex32-entropy-and-ids",
+      "head": "89281257377c065fb5d924242bec94914cb26586",
+      "commits": [
+        "89281257377c065fb5d924242bec94914cb26586"
+      ],
+      "state": "OPEN",
+      "reported_status_checks": []
+    },
+    {
+      "number": 68,
+      "url": "https://github.com/Rob1Ham/firmware/pull/68",
+      "branch": "review/codex32-export-signatures",
+      "head": "16783a0ae622b60e726597fd6846320e0b3c31e0",
+      "commits": [
+        "16783a0ae622b60e726597fd6846320e0b3c31e0"
+      ],
+      "state": "OPEN",
+      "reported_status_checks": []
+    },
+    {
+      "number": 69,
+      "url": "https://github.com/Rob1Ham/firmware/pull/69",
+      "branch": "review/codex32-recovery-profile",
+      "head": "2455158a905a4bd513e49c73667297c9e802cdac",
+      "commits": [
+        "2455158a905a4bd513e49c73667297c9e802cdac"
+      ],
+      "state": "OPEN",
+      "reported_status_checks": []
+    }
+  ],
+  "references": [
+    {
+      "name": "BIP93",
+      "repository": "https://github.com/bitcoin/bips",
+      "commit": "927b6de9915c9262615a6399de51b200f81e5aa4",
+      "path": "bip-0093.mediawiki",
+      "sha256": "c847c6e513b64ee6ab10975690757d64a875f77c0e75866a86b733f3985784ec",
+      "role": "normative"
+    },
+    {
+      "name": "python-codex32",
+      "repository": "https://github.com/BenWestgate/python-codex32",
+      "branch": "master",
+      "commit": "8ab3bae9e5e0877b74cbaca52b2f05229e172f3e",
+      "package_version": "0.6.2",
+      "role": "comparison within reviewed capabilities",
+      "suite_executed": false
+    },
+    {
+      "name": "rust-codex32",
+      "repository": "https://github.com/BlockstreamResearch/codex32",
+      "commit": "1a1c22aa895d78f2d385303feb9491d155e14cf7",
+      "path": "reference/rust-codex32",
+      "package_version": "0.1.0",
+      "role": "comparison within reviewed capabilities"
+    }
+  ],
+  "prior_python_reference": {
+    "commit": "22990b954e0a6d7f7b417a2a35e503e9ea97ead2",
+    "reported_version": "1.0.0rc1",
+    "source": "coldcard-pr819-python-codex32-cross-comparison.md",
+    "independently_checked_out_in_this_assessment": false
+  },
+  "base_submodules": {
+    "external/micropython": "3d227feca2b5067fbd024a30d7118cf148d0d3df",
+    "external/libngu": "4d9af8424ac9183cb3cbb546978c4d05190231e9",
+    "external/ckcc-protocol": "650c54b5215a7cfe077cd02bb83c884aa984d32c",
+    "external/mpy-qr": "11347d83f4eb325b10676a4eb8e17deccfe0df44"
+  },
+  "checks": {
+    "pairwise_merges": {
+      "command": "git merge-tree --write-tree <head-a> <head-b>",
+      "location": "temporary review clone",
+      "pairs_checked": 15,
+      "clean_pairs": 13,
+      "conflicts": [
+        {
+          "prs": [
+            62,
+            64
+          ],
+          "paths": [
+            "docs/codex32.md",
+            "testing/test_codex32.py"
+          ]
+        },
+        {
+          "prs": [
+            63,
+            66
+          ],
+          "paths": [
+            "shared/actions.py"
+          ]
+        }
+      ],
+      "full_six_pr_integration_performed": false
+    },
+    "rust_tests": {
+      "command": "cargo test --offline --manifest-path reference/rust-codex32/Cargo.toml",
+      "exit_code": 0,
+      "passed": 12,
+      "failed": 0,
+      "doc_tests": 0,
+      "warnings": "Two lifetime-style warnings, repeated in test compilation"
+    },
+    "firmware_positive_vectors": {
+      "method": "Ad hoc CPython import of shared/codex32.py at pinned Git revisions; parse and case-normalized re-encode every distinct valid MS string from BIP test vectors 1 through 8, then recover vector 2 and all ten vector 3 subsets",
+      "results": {
+        "base": {
+          "sha": "3e32e32a49c551b35e7bb3cecbf910241f553537",
+          "distinct_valid_vector_strings": 34,
+          "roundtrips_passed": 31,
+          "unsupported": [
+            {
+              "encoded_length": 54,
+              "reason": "ms codex32 length"
+            },
+            {
+              "encoded_length": 61,
+              "reason": "ms codex32 length"
+            },
+            {
+              "encoded_length": 67,
+              "reason": "ms codex32 length"
+            }
+          ],
+          "vector_2_recovery_passed": true,
+          "vector_3_subset_recoveries_passed": 10
+        },
+        "pr64": {
+          "sha": "d95352b34b34a1c87d8e3cd90fe45ee45b2e4d72",
+          "distinct_valid_vector_strings": 34,
+          "roundtrips_passed": 34,
+          "unsupported": [],
+          "vector_2_recovery_passed": true,
+          "vector_3_subset_recoveries_passed": 10
+        }
+      }
+    }
+  },
+  "environment_observations": {
+    "architecture": "arm64",
+    "platform": "macOS",
+    "default_python": "3.14.7",
+    "executables_found": [
+      "python3",
+      "cargo",
+      "rustc",
+      "arm-none-eabi-gcc",
+      "sdl2-config",
+      "pkg-config",
+      "xterm",
+      "uv",
+      "docker"
+    ],
+    "python_modules_missing_in_default_interpreter": [
+      "pytest",
+      "mnemonic",
+      "bip32",
+      "sdl2",
+      "ckcc",
+      "serial",
+      "zbar",
+      "pysecp256k1"
+    ],
+    "paths_not_found": [
+      "ENV",
+      "unix/ENV",
+      "testing/ENV",
+      "unix/coldcard-mpy",
+      "external/micropython/ports/unix/coldcard-mpy"
+    ],
+    "docker_daemon_checked": false,
+    "all_other_local_environments_searched": false
+  },
+  "not_performed": [
+    "Full feature/call-graph audit",
+    "Full six-PR integration",
+    "Firmware or simulator build",
+    "Firmware pytest suite",
+    "Python reference suite",
+    "Simulator end-to-end tests",
+    "Physical hardware tests",
+    "Local source commits or release tag creation"
+  ],
+  "follow_up": {
+    "plan": "docs/codex32-e2e-plan.md",
+    "prompt": "docs/codex32-goal-prompt.md",
+    "goal_started": false
+  },
+  "qualification_refresh": {
+    "checked_at_utc": "2026-10-04T02:29:19Z",
+    "source": "gh pr list/view --repo Rob1Ham/firmware",
+    "scope": "PRs 62-69",
+    "note": "The historical assessment checks below remain evidence from the earlier snapshot; they are not qualification results for the refreshed heads."
+  }
+}

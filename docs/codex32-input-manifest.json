@@ -1,0 +1,151 @@
+{
+  "schema_version": 1,
+  "captured_at_utc": "2026-10-04T02:29:19Z",
+  "repository": "https://github.com/Rob1Ham/firmware",
+  "integration": {
+    "branch": "codex/codex32-e2e",
+    "base": "3e32e32a49c551b35e7bb3cecbf910241f553537",
+    "merged_head": "641e3c724951f7d1e1cbb6cc0eca142ffb27677b",
+    "merge_order": [
+      64,
+      62,
+      65,
+      66,
+      63,
+      67,
+      68,
+      69
+    ]
+  },
+  "pull_requests": [
+    {
+      "number": 62,
+      "url": "https://github.com/Rob1Ham/firmware/pull/62",
+      "branch": "review/codex32-checksum-input",
+      "head": "7d04ee3f6624d150209fa9965700b3e76171911a",
+      "commits": [
+        "9dfb9c5253039d9414943af8e8f144466e1fa8d2",
+        "91b38eea25aaa874061d2545a19f6f31fd326adb",
+        "7d04ee3f6624d150209fa9965700b3e76171911a"
+      ]
+    },
+    {
+      "number": 63,
+      "url": "https://github.com/Rob1Ham/firmware/pull/63",
+      "branch": "review/codex32-recovery-identity",
+      "head": "ee38283522984081d2e9b848efd790bc2e41e975",
+      "commits": [
+        "ee38283522984081d2e9b848efd790bc2e41e975"
+      ]
+    },
+    {
+      "number": 64,
+      "url": "https://github.com/Rob1Ham/firmware/pull/64",
+      "branch": "review/codex32-all-bip93-sizes",
+      "head": "517bd933eb1a7d79e8d66412badf28e18aa40aa6",
+      "commits": [
+        "28b39d427e6e00dbaa03c7ed8cffc2e5e66a2784",
+        "d95352b34b34a1c87d8e3cd90fe45ee45b2e4d72",
+        "517bd933eb1a7d79e8d66412badf28e18aa40aa6"
+      ]
+    },
+    {
+      "number": 65,
+      "url": "https://github.com/Rob1Ham/firmware/pull/65",
+      "branch": "review/codex32-protect-pending",
+      "head": "49bdc723d9a5ee9ddadab7e989f9917e247cf0b0",
+      "commits": [
+        "49bdc723d9a5ee9ddadab7e989f9917e247cf0b0"
+      ]
+    },
+    {
+      "number": 66,
+      "url": "https://github.com/Rob1Ham/firmware/pull/66",
+      "branch": "review/codex32-recovery-state",
+      "head": "698811ad0adb9f1a41c4dd7ec971097d4959f002",
+      "commits": [
+        "698811ad0adb9f1a41c4dd7ec971097d4959f002"
+      ]
+    },
+    {
+      "number": 67,
+      "url": "https://github.com/Rob1Ham/firmware/pull/67",
+      "branch": "review/codex32-entropy-and-ids",
+      "head": "89281257377c065fb5d924242bec94914cb26586",
+      "commits": [
+        "89281257377c065fb5d924242bec94914cb26586"
+      ]
+    },
+    {
+      "number": 68,
+      "url": "https://github.com/Rob1Ham/firmware/pull/68",
+      "branch": "review/codex32-export-signatures",
+      "head": "16783a0ae622b60e726597fd6846320e0b3c31e0",
+      "commits": [
+        "16783a0ae622b60e726597fd6846320e0b3c31e0"
+      ]
+    },
+    {
+      "number": 69,
+      "url": "https://github.com/Rob1Ham/firmware/pull/69",
+      "branch": "review/codex32-recovery-profile",
+      "head": "2455158a905a4bd513e49c73667297c9e802cdac",
+      "commits": [
+        "2455158a905a4bd513e49c73667297c9e802cdac"
+      ]
+    }
+  ],
+  "references": [
+    {
+      "name": "BIP93",
+      "repository": "https://github.com/bitcoin/bips",
+      "commit": "927b6de9915c9262615a6399de51b200f81e5aa4",
+      "path": "bip-0093.mediawiki",
+      "sha256": "c847c6e513b64ee6ab10975690757d64a875f77c0e75866a86b733f3985784ec",
+      "role": "normative"
+    },
+    {
+      "name": "python-codex32",
+      "repository": "https://github.com/BenWestgate/python-codex32",
+      "branch": "master",
+      "commit": "8ab3bae9e5e0877b74cbaca52b2f05229e172f3e",
+      "package_version": "0.6.2",
+      "role": "comparison within reviewed capabilities",
+      "suite_executed": false
+    },
+    {
+      "name": "rust-codex32",
+      "repository": "https://github.com/BlockstreamResearch/codex32",
+      "commit": "1a1c22aa895d78f2d385303feb9491d155e14cf7",
+      "path": "reference/rust-codex32",
+      "package_version": "0.1.0",
+      "role": "comparison within reviewed capabilities"
+    }
+  ],
+  "submodules": {
+    "external/ckcc-protocol": "650c54b5215a7cfe077cd02bb83c884aa984d32c",
+    "external/libngu": "4d9af8424ac9183cb3cbb546978c4d05190231e9",
+    "external/micropython": "3d227feca2b5067fbd024a30d7118cf148d0d3df",
+    "external/mpy-qr": "11347d83f4eb325b10676a4eb8e17deccfe0df44",
+    "misc/gpu/external/cmsis_device_c0": "7e32bf9d8117ee4c8f6a1d138b814fc24bf4c906",
+    "misc/gpu/external/stm32c0xx_hal_driver": "4c5e3e45a8478a33decb1f45d663f485f89c459b"
+  },
+  "platform": {
+    "system": "Darwin",
+    "machine": "arm64",
+    "release": "25.6.0"
+  },
+  "tools": {
+    "python3": "Python 3.14.7",
+    "rustc": "rustc 1.92.0 (ded5c06cf 2025-12-08)",
+    "cargo": "cargo 1.92.0 (344c4567c 2025-10-21)",
+    "arm-none-eabi-gcc": "arm-none-eabi-gcc (Arm GNU Toolchain 15.2.Rel1 (Build arm-15.86)) 15.2.1 20251203",
+    "sdl2-config": "2.32.70",
+    "pkg-config": "2.5.1",
+    "uv": "uv 0.7.21 (77c771c7f 2025-07-14)",
+    "docker": "Docker version 29.5.2, build 79eb04c"
+  },
+  "qualification_status": "pending",
+  "build_commands": [],
+  "test_commands": []
+}

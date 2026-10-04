@@ -1765,12 +1765,14 @@ def enable_nfc(needs_nfc, sim_exec, settings_set):
     return doit
 
 @pytest.fixture
-def enable_virtdisk(request, settings_set):
+def enable_virtdisk(request, goto_home, enable_hw_ux, settings_get):
     def doit():
         request.getfixturevalue('needs_virtdisk')
         # Wallet switches can load a settings key without the simulator's
-        # boot-time --set defaults. Reassert this route's prerequisite.
-        settings_set('vidsk', 1)
+        # boot-time --set defaults. Enable the UX route as well as the setting.
+        goto_home()
+        enable_hw_ux('vdisk')
+        assert settings_get('vidsk', 0)
     return doit
 
 @pytest.fixture

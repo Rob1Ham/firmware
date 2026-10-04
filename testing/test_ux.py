@@ -1171,7 +1171,14 @@ def test_menu_wrapping(goto_home, pick_menu_item, cap_story, cap_menu,
     goto_home()
 
 def test_chain_changes_settings_xpub(pick_menu_item, cap_story, press_select,
-                                     get_identity_story):
+                                     get_identity_story, goto_home):
+    # Start from an explicit chain; a fresh simulator defaults to Bitcoin.
+    goto_home()
+    pick_menu_item("Advanced/Tools")
+    pick_menu_item("Danger Zone")
+    pick_menu_item("Testnet Mode")
+    pick_menu_item("Testnet4")
+    time.sleep(0.2)
     _, parsed_ident = get_identity_story()
     assert parsed_ident["ek"].startswith("tpub")
     press_select()

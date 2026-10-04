@@ -1,6 +1,12 @@
 # Codex32 review and simulator release plan
 
-## Qualification progress — October 4, 2026 (America/Chicago)
+## Qualification evidence — October 4, 2026 (America/Chicago)
+
+The dated manifests under `artifacts/codex32/2026-10-04-integration/` retain
+both qualified runs and unsuccessful diagnostic attempts. The final gate
+status, source revision, artifact hashes, and exact exclusions are recorded in
+`artifacts/codex32/2026-10-04-integration/qualification-report.json`; this
+progress section is the historical evidence baseline for that report.
 
 The local integration branch now contains reviewed PRs #62–69 and focused
 integration, harness, and regression fixes. In addition to the PR conflict
@@ -31,14 +37,15 @@ exhibited a second-wallet RPC stall and is not used as test evidence.
 Individual excluded test IDs, counterpart passes, and reasons live in the
 skip ledgers under `artifacts/codex32/`.
 
-Broad Q1 offline signing and Mk5 backup qualification are in progress. The
-final Mk5 ephemeral regression, final source-revision Codex32 and persistence
-reruns, MK/Q1 recompilation, clean tagged-checkout reproduction, and local
-archive remain gates. An earlier Q1 signing diagnostic run exposed a test
-network mismatch and a missing SIGHASH_SINGLE warning policy; isolated
-corrected cases passed, but only the full rerun can qualify that suite. No
-test-release tag exists yet. Test artifacts from exploratory failures remain
-available and are not counted as passes.
+Broad Q1 offline signing passed 689 tests with four exact structural
+dispositions; the Q1 Core-dependent lane passed 34/34. Mk5 backup passed 135
+tests with two Q1-only dispositions, and Mk5 ephemeral passed 161 tests with
+41 Q1-only QR dispositions. An earlier signing diagnostic exposed a test
+network mismatch and a missing SIGHASH_SINGLE warning policy; the corrected
+full suite passed. Final-source Codex32 and persistence reruns, clean tagged
+checkout verification, and local packaging are controlled by the report's
+gates. Test artifacts from exploratory failures remain available and are not
+counted as passes.
 
 ## Qualification progress — October 3, 2026 (America/Chicago)
 

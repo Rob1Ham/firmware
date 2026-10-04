@@ -1677,20 +1677,29 @@ def test_derive_codex32_shares(hrp, size, state, threshold, reset_seed_words, un
     reset_seed_words()
 
 
-def test_shamir_recover_invalid_key(reset_seed_words, recover_codex32_shares,
-                                     cap_story, sim_exec, settings_get):
+def test_shamir_recover_invalid_key(reset_seed_words, goto_shamir_recover,
+                                    cap_story, sim_exec, settings_set,
+                                    master_settings_get, enable_nfc, press_nfc,
+                                    nfc_write_text):
     reset_seed_words()
     snapshot = 'RV.write(repr((bytes(pa.fetch(bypass_tmp=True)), pa.tmp_value)))'
     before = sim_exec(snapshot)
     invalid = Share.from_seed(bytes(range(32)) + bytes(32), 'cx', 'zerq', SECRET, 2)
     first = Share.from_seed(bytes(range(64)), 'cx', 'zerq', 'a', 2, 0)
     second = generate_share([invalid, first], 'c')
-    recover_codex32_shares([first.to_string(), second.to_string()], 'sd', tmp=True)
+    settings_set('c32_shares', [first.to_string()])
+    enable_nfc()
+    goto_shamir_recover(tmp=True)
+    check_recover_story(cap_story()[1], 2, 'zerq', 1, 'cx')
+    press_nfc()
+    time.sleep(.1)
+    nfc_write_text(second.to_string())
+    time.sleep(.3)
     title, body = cap_story()
     assert title == 'FAILED'
     assert 'bip32 lottery winner' in body
     assert sim_exec(snapshot) == before
-    assert settings_get('c32_shares', []) == []
+    assert master_settings_get('c32_shares') == [first.to_string()]
     reset_seed_words()
 
 

@@ -258,4 +258,25 @@ def generate_share(shares, share_index):
     return Share(first.hrp, first.uid, array_to_bech32(result[6:]),
                  share_index, first.threshold)
 
+def parse_saved_shares(values):
+    # Pending recovery state is untrusted input, even when settings normally
+    # have a secret-derived storage key. Never let saved entries bypass the
+    # same header/index checks used while collecting shares interactively.
+    assert isinstance(values, list), "invalid saved shares"
+    shares = [Share.parse(value) for value in values]
+    if not shares:
+        return shares
+
+    first = shares[0]
+    assert not first.is_secret_share(), "saved secret is not a recovery share"
+    assert len(shares) < first.threshold, "too many saved shares"
+    indices = set()
+    for share in shares:
+        assert not share.is_secret_share(), "saved secret is not a recovery share"
+        assert (share.hrp, share.uid, share.threshold, len(share)) == \
+               (first.hrp, first.uid, first.threshold, len(first)), "saved set mismatch"
+        assert share.index not in indices, "duplicate saved share index"
+        indices.add(share.index)
+    return shares
+
 # EOF

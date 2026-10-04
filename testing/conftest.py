@@ -1765,6 +1765,15 @@ def enable_nfc(needs_nfc, sim_exec, settings_set):
     return doit
 
 @pytest.fixture
+def enable_virtdisk(request, settings_set):
+    def doit():
+        request.getfixturevalue('needs_virtdisk')
+        # Wallet switches can load a settings key without the simulator's
+        # boot-time --set defaults. Reassert this route's prerequisite.
+        settings_set('vidsk', 1)
+    return doit
+
+@pytest.fixture
 def nfc_disabled(settings_get):
     def doit():
         return not bool(settings_get('nfc', 0))

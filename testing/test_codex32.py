@@ -1360,15 +1360,18 @@ def test_shamir_split_m_of_m_warning_cancel(reset_seed_words, goto_shamir_split,
 ])
 def test_codex32_shamir_split(hrp, sec_len, m_n, way, initial_threshold, set_encoded_secret, goto_shamir_split,
                               shamir_split_settings, shamir_verify_recover, export_shares, skip_if_useless_way,
-                              press_cancel, press_select, cap_story, is_headless, enable_nfc):
+                              press_cancel, press_select, cap_story, is_headless, enable_nfc,
+                              enable_virtdisk):
 
     if way == 'qr' and is_headless:
         pytest.skip('headless mode: QR tests disabled')
 
     enable_nfc()  # can be disabled by previous fixtures
-    skip_if_useless_way(way)
     secret = Share.from_seed(prandom(sec_len), hrp, 'cash', SECRET, initial_threshold)
     set_encoded_secret(native_encoding(secret.to_string()))
+    if way == 'vdisk':
+        enable_virtdisk()
+    skip_if_useless_way(way)
 
     threshold, num_shares = m_n
     goto_shamir_split()
@@ -1553,13 +1556,16 @@ def test_shamir_recover_secret_types(sec_type, m_n, generate_shares_from_secret,
 ])
 def test_shamir_recover_import_ways(hrp, size, way, is_q1, skip_if_useless_way, set_seed_words, generate_shares_from_secret,
                                     recover_codex32_shares, confirm_tmp_seed, verify_ephemeral_secret_ui, dev, enable_nfc,
-                                    sim_exec, enable_hw_ux, settings_set, reset_seed_words, active_secret):
+                                    sim_exec, enable_hw_ux, settings_set, reset_seed_words, active_secret,
+                                    enable_virtdisk):
     if way == 'input' and size == 64 and not is_q1:
         pytest.skip('long manual entry covered on Q')
     set_seed_words('extra sport youth surge capital category kid ginger extend way cause hamster')
     settings_set('seedvault', False)
 
     enable_nfc()
+    if way == 'vdisk':
+        enable_virtdisk()
     skip_if_useless_way(way)
     if hrp == 'cx':
         secret, shares, node = generate_shares_from_secret(3, 2, mnemonic='abandon ' * 11 + 'about')
@@ -1715,6 +1721,7 @@ def test_shamir_recover_failures(reset_seed_words, goto_shamir_recover, generate
     # Canceling discard keeps collecting; only Save & Exit writes the partial set.
     assert not master_settings_get('c32_shares')
     press_cancel()
+    time.sleep(.1)
     assert 'Press (1) to Save & Exit.' in cap_story()[1]
     need_keypress('1')
     time.sleep(.1)
@@ -1808,17 +1815,26 @@ def test_derive_codex32_shares(hrp, size, state, threshold, reset_seed_words, un
 
         if share == shares[0]:
             press_cancel()
-            assert 'Press (1) to Save & Exit.' in cap_story()[1]
-            need_keypress('1')
             time.sleep(.1)
-            assert master_settings_get('c32_shares') == [share.to_string()]
-            pick_menu_item('Derive Shares')
-            press_select()  # warning
-            press_select()  # collection introduction
+            if state in ('blank', 'blank_temporary'):
+                story = cap_story()[1]
+                assert 'Without a master wallet' in story
+                assert 'Save & Exit' not in story
+                assert not master_settings_get('c32_shares')
+                press_cancel()  # keep collecting without persisting a share
+                time.sleep(.1)
+            else:
+                assert 'Press (1) to Save & Exit.' in cap_story()[1]
+                need_keypress('1')
+                time.sleep(.1)
+                assert master_settings_get('c32_shares') == [share.to_string()]
+                pick_menu_item('Derive Shares')
+                press_select()  # warning
+                press_select()  # collection introduction
             check_recover_story(cap_story()[1], threshold, 'name', 1, hrp,
                                 indices=[share.index], is_q1=is_q1)
 
-    assert master_settings_get('c32_shares') == []
+    assert not master_settings_get('c32_shares')
     menu = cap_menu()
     assert menu[0] == '%d required [NAME]' % threshold
     assert menu[1:] == ["Share '%s'" % idx for idx in output_indices]
@@ -1836,6 +1852,7 @@ def test_derive_codex32_shares(hrp, size, state, threshold, reset_seed_words, un
             combo = shares[:omitted] + shares[omitted + 1:] + [derived]
             assert generate_share(combo, SECRET).to_string() == secret
         need_keypress('1')
+        time.sleep(.1)
         story = cap_story()[1]
         assert 'written:' in story
         assert 'Signature:' not in story
@@ -1847,16 +1864,21 @@ def test_derive_codex32_shares(hrp, size, state, threshold, reset_seed_words, un
         press_cancel()  # export result
         press_cancel()  # share display
     press_cancel()
+    time.sleep(.1)
     title, story = cap_story()
     assert title == 'DISCARD?'
     assert 'Exit and discard collected shares?' in story
     press_cancel()  # keep the session, including its original inputs
+    time.sleep(.1)
     pick_menu_item("Share '%s'" % output_indices[0])
     assert '(0)' not in cap_story()[1]
     assert parse_rendered_codex32(cap_story()[1]) == expected
     press_cancel()
+    time.sleep(.1)
     press_cancel()
+    time.sleep(.1)
     press_select()
+    time.sleep(.1)
     assert 'Derive Shares' in cap_menu()
     assert sim_exec(snapshot) == before
     reset_seed_words()

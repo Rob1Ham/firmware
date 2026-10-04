@@ -3061,6 +3061,9 @@ async def codex32_derive_shares(*a):
 
     shares = await collect_codex32_shares('Derive Shares')
     if not shares: return
+    # The complete set is now held only for this derivation session. A saved
+    # partial set is no longer needed and must not survive an interrupted exit.
+    settings.master_set('c32_shares', [])
 
     async def derive(menu, label, item):
         value = generate_share(shares, item.arg).to_string()

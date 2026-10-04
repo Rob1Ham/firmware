@@ -392,15 +392,25 @@ def is_ftux_screen(sim_exec):
 def expect_ftux(cap_menu, cap_story, press_select, is_ftux_screen):
     # seed was entered, FTUX happens, get to main menu
     def doit():
-        # first time UX here
-        while is_ftux_screen():
-            _, story = cap_story()
-            if not story: 
-                break
-            press_select()
-
-        m = cap_menu()
-        assert m[0] == 'Ready To Sign'
+        # The QR import can return before FirstTimeUX has finished replacing
+        # its story with the home menu. Wait for the actual menu transition.
+        deadline = time.monotonic() + 5
+        while time.monotonic() < deadline:
+            if is_ftux_screen():
+                _, story = cap_story()
+                if story:
+                    press_select()
+            else:
+                try:
+                    m = cap_menu()
+                except RuntimeError as exc:
+                    if 'FirstTimeUX' not in str(exc):
+                        raise
+                else:
+                    assert m[0] == 'Ready To Sign'
+                    return
+            time.sleep(.1)
+        pytest.fail('First-time setup did not reach Ready To Sign')
 
     return doit
 

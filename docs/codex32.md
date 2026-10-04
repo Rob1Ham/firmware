@@ -42,7 +42,7 @@ the active wallet automatically:
 | Active wallet | Split format | Recovery restores | Share characters |
 |---------------|--------------|-------------------|------------------|
 | English BIP-39 words (12, 18, 24) | `cw1` | Original words; passphrases can be applied afterward | 48, 61, 74 |
-| Raw BIP-32 master seed (128, 256, 512 bits) | `ms1` | Master-seed bytes | 48, 74, 127 |
+| Raw BIP-32 master seed (128, 160, 192, 224, 256, 512 bits) | `ms1` | Master-seed bytes | 48, 54, 61, 67, 74, 127 |
 | Extended private key, including an active BIP-39 passphrase wallet | `cx1` | Chain code and private key | 127 |
 
 `ms1` is defined by BIP-93. `cw1` and `cx1` are COLDCARD extensions and require
@@ -190,6 +190,11 @@ Calculating the checksum alone does not activate a wallet.
 
 Calculating a checksum cannot detect existing transcription mistakes: it computes
 a checksum for exactly the header and payload you entered.
+An MS1 header and payload for 192, 224 or 256 bits can be the same length as
+a shorter, complete MS1 share. At these lengths COLDCARD asks **before**
+interpreting the input: press OK to validate a complete share, or (1) only
+if you entered a longer body without its checksum. Never replace a bad
+checksum on an existing backup: that locks in any errors in the original data.
 
 ## Split the Active Wallet
 
@@ -296,8 +301,7 @@ recording the shares, test recovery before relying on them:
 - **Checksum or case error:** compare the entire string with the original,
   including its prefix and checksum. Use all uppercase or all lowercase.
   COLDCARD detects errors but does not implement BIP-93 error correction.
-- **Unsupported length:** only the payload sizes listed under [Encodings](#encodings)
-  are supported, even if another length is valid under BIP-93.
+- **Unsupported length:** use a payload size listed under [Encodings](#encodings).
 - **Mismatched or duplicate shares:** use distinct indices from the same split,
   with matching prefix, ID, threshold, and length. Index `s` is already a
   secret, so use `Import Codex32` rather than `Shamir Recover` for it.
@@ -421,8 +425,8 @@ shares instead.
 
 ## Limitations
 
-- Only the sizes in [Encodings](#encodings) are supported, even where BIP-93
-  permits additional sizes.
+- MS1 supports all six BIP-93 master-seed sizes. CW1 and CX1 support only the
+  sizes in [Encodings](#encodings).
 - Generating a new Codex32 wallet offers 128 or 256 bits only.
 - While Spending Policy is in force, **Generate**, **Derive Shares**, and
   **Shamir Split** are unavailable. Access to **Temporary Seed** requires the

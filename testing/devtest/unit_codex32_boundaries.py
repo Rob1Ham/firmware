@@ -36,7 +36,7 @@ def run():
                 node.blank()
         return Share.parse(share.to_string())
 
-    FORMATS = (('ms', 16), ('ms', 32), ('ms', 64), ('cx', 64),
+    FORMATS = (('ms', 16), ('ms', 20), ('ms', 24), ('ms', 28), ('ms', 32), ('ms', 64), ('cx', 64),
                ('cw', 16), ('cw', 24), ('cw', 32))
     INDICES = 'acdefghjk'
 

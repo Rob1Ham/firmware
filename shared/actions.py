@@ -1497,15 +1497,54 @@ async def codex32_calculate_checksum(_1, _2, item):
             title='Calculate Checksum' if version.has_qwerty else 'Calc Checksum',
             input_value=value)
         if not value: break
-        try:
-            share = Share.parse(value.strip().replace(' ', ''))
-        except Exception:
+        value = value.strip().replace(' ', '')
+        share = None
+        # A *valid* complete CW1 or MS1 share may also be a longer share's
+        # checksum-less body. Select the intended interpretation before parsing
+        # as complete; a failed checksum cannot safely choose the mode for us.
+        overlaps = {
+            ('cw', 48): ('12-word', '18-word'),
+            ('cw', 61): ('18-word', '24-word'),
+            ('ms', 48): ('128-bit', '192-bit'),
+            ('ms', 54): ('160-bit', '224-bit'),
+            ('ms', 61): ('192-bit', '256-bit'),
+        }
+        sizes = overlaps.get((value[:2].lower(), len(value)))
+        if sizes:
             try:
-                share = Share.from_body(value.strip().replace(' ', ''))
-            except Exception as exc:
-                await ux_show_story('Invalid Codex32 header or payload.\n\n%s' % exc,
-                                    title='FAILED')
-                continue
+                candidate = Share.from_body(value)
+            except Exception:
+                pass                   # Longer format unsupported or malformed.
+            else:
+                choice = await ux_show_story(
+                    'This could be a complete %s %s share OR the header and payload'
+                    ' of a %s share without a checksum.\n\nPress OK to validate the'
+                    ' complete share, (1) to add a checksum to the longer body, or'
+                    ' CANCEL to go back. Never replace a failing checksum.' %
+                    (sizes[0], candidate.hrp.upper() + '1', sizes[1]),
+                    title='CHECK LENGTH', escape='1')
+                if choice == '1':
+                    share = candidate
+                elif choice == 'y':
+                    try:
+                        share = Share.parse(value)
+                    except Exception as exc:
+                        await ux_show_story('Complete Codex32 share has an invalid checksum.'
+                                            '\n\n%s' % exc, title='FAILED')
+                        continue
+                else:
+                    continue
+
+        if share is None:
+            try:
+                share = Share.parse(value)
+            except Exception:
+                try:
+                    share = Share.from_body(value)
+                except Exception as exc:
+                    await ux_show_story('Invalid Codex32 header or payload.\n\n%s' % exc,
+                                        title='FAILED')
+                    continue
 
         intro = 'Checksum:\n\n%s\n\nCodex32:\n\n' % share.checksum().upper()
         await show_shamir_share(share.to_string(), share.uid, intro=intro, ephemeral=item.arg)

@@ -1,5 +1,31 @@
 # Codex32 review and simulator release plan
 
+## Qualification progress — October 3, 2026 (America/Chicago)
+
+All eight PR heads (#62–69) are merged locally on `codex/codex32-e2e`.
+The input pins and build commands are in `codex32-input-manifest.json`; the
+file/function review and finding ledger is `codex32-review-ledger.md`.
+The original checkout and review worktrees remain untouched.
+
+The Unix MicroPython simulator and unsigned STM32 MK/Q1 targets compile from
+this checkout. MK/Q1 `rng-code-check` passed. The cross compile needs the
+command-line `CFLAGS_EXTRA=-Wno-error=dangling-pointer` workaround for modern
+GCC against pinned MicroPython; the Unix build uses `CWARN=-Wall` for current
+Clang. Host BIP93, extension, harness and dice-script tests passed together:
+381 passed, zero skipped or failed. The pinned Python reference suite passed
+23 tests, Rust suite 12 tests; differential adapters found no disagreements
+for the stated capability sets. The simulator's Codex32 MicroPython unit lane
+passed 2/2 on each of Mk4, Mk5 and Q1. A nonheadless Q1 QR capture/decode lane
+passed 4/4 after clearing a stale X11 `DISPLAY` value. Three independent
+save/restart/discard repetitions passed on all three models.
+
+The first full Codex32 suites exposed a test-fixture error: signature
+verification removed `.sig` files before the fixture checked that they still
+existed. This was fixed in a focused local commit. The failed first attempts
+remain in `artifacts/codex32/2026-10-03-integration/`. Full corrected suites,
+adjacent regressions, final clean qualification and tag reproduction remain
+open gates; no test-release tag has been created.
+
 ## Integration progress — October 3, 2026 (America/Chicago)
 
 The isolated `codex/codex32-e2e` branch starts at the specified

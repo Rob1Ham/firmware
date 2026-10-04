@@ -111,7 +111,7 @@
       "commit": "8ab3bae9e5e0877b74cbaca52b2f05229e172f3e",
       "package_version": "0.6.2",
       "role": "comparison within reviewed capabilities",
-      "suite_executed": false
+      "suite_executed": true
     },
     {
       "name": "rust-codex32",
@@ -127,6 +127,9 @@
     "external/libngu": "4d9af8424ac9183cb3cbb546978c4d05190231e9",
     "external/micropython": "3d227feca2b5067fbd024a30d7118cf148d0d3df",
     "external/mpy-qr": "11347d83f4eb325b10676a4eb8e17deccfe0df44",
+    "external/micropython/lib/stm32lib": "c1b7a415778247dd3881a1f3d11ea02190cbc94d",
+    "external/libngu/libs/mpy": "ab754d5924168d027bfc2eeed7881b9b2e469535",
+    "external/libngu/libs/secp256k1": "6e2c8bc4ecdc6e71dbe7a368f360d8d453ce435d",
     "misc/gpu/external/cmsis_device_c0": "7e32bf9d8117ee4c8f6a1d138b814fc24bf4c906",
     "misc/gpu/external/stm32c0xx_hal_driver": "4c5e3e45a8478a33decb1f45d663f485f89c459b"
   },
@@ -137,6 +140,8 @@
   },
   "tools": {
     "python3": "Python 3.14.7",
+    "host_test_python": "Python 3.11.5",
+    "python_reference_python": "Python 3.11.5",
     "rustc": "rustc 1.92.0 (ded5c06cf 2025-12-08)",
     "cargo": "cargo 1.92.0 (344c4567c 2025-10-21)",
     "arm-none-eabi-gcc": "arm-none-eabi-gcc (Arm GNU Toolchain 15.2.Rel1 (Build arm-15.86)) 15.2.1 20251203",
@@ -145,7 +150,25 @@
     "uv": "uv 0.7.21 (77c771c7f 2025-07-14)",
     "docker": "Docker version 29.5.2, build 79eb04c"
   },
+  "environment_lock": {
+    "path": "testing/requirements-codex32.lock",
+    "sha256": "7864dd1d85f36868877849f4767fc523f84bdde376c86f3d7f72c9944331b178"
+  },
   "qualification_status": "pending",
-  "build_commands": [],
-  "test_commands": []
+  "build_commands": [
+    "make -C external/micropython/mpy-cross CWARN=-Wall",
+    "make -C unix setup CWARN=-Wall",
+    "make -C external/libngu min-one-time",
+    "(cd unix && make all CWARN=-Wall)",
+    "(cd stm32 && CFLAGS_EXTRA=-Wno-error=dangling-pointer make -f MK-Makefile all)",
+    "(cd stm32 && CFLAGS_EXTRA=-Wno-error=dangling-pointer make -f Q1-Makefile all)"
+  ],
+  "test_commands": [
+    ".venv/bin/python -m pytest --noconftest testing/test_codex32_bip93.py testing/test_codex32_extensions.py testing/test_codex32_e2e_harness.py testing/test_rolls.py",
+    "cargo test --offline --manifest-path <pinned Rust source>/reference/rust-codex32/Cargo.toml",
+    ".venv/bin/python testing/run_codex32_python_comparison.py --python .venv-python-ref/bin/python --source <pinned Python source> --output <artifact.json>",
+    ".venv/bin/python testing/run_codex32_rust_comparison.py --source <pinned Rust source> --output <artifact.json>",
+    "(cd testing && ../.venv/bin/python codex32_e2e_harness.py --model <mk4|mk5|q1> --target test_codex32.py --artifacts <isolated artifact directory>)",
+    "(cd testing && ../.venv/bin/python run_codex32_restart_matrix.py --artifacts <isolated artifact directory> --repetitions 3)"
+  ]
 }

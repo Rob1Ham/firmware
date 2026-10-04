@@ -1,5 +1,45 @@
 # Codex32 review and simulator release plan
 
+## Qualification progress — October 4, 2026 (America/Chicago)
+
+The local integration branch now contains reviewed PRs #62–69 and focused
+integration, harness, and regression fixes. In addition to the PR conflict
+resolutions described below, local tests exposed and fixed impossible 160-bit
+padding acceptance, stale saved partial shares after derivation, a detached
+signature fixture error, simulator readiness races, test network selection,
+and bounded Bitcoin Core startup/cleanup. The review ledger records the
+feature boundaries and the remaining hardware limits.
+
+The corrected full Codex32 UI suite passed on Mk4 (254 tests, 30 Q1-only
+cases with exact dispositions), Mk5 (254 and 30), and Q1 (284). The Q1 QR
+display lane decoded four live screenshots. The MicroPython Codex32 unit lane
+passed on each model, and the save/restart/discard matrix passed three
+independent process repetitions per model. Host BIP93, extension, harness,
+and dice tests passed 385/385. The pinned Python and Rust reference suites
+passed 23 and 12 tests; differential checks recorded zero disagreements in
+their documented shared capabilities. The published valid/invalid BIP93
+vectors and deterministic generated cases are in the comparison artifacts.
+
+Adjacent qualified coverage includes Mk5 Seed XOR (88 pass, 48 Q1-only
+dispositions) with Q1 import (90 pass), Mk5 UX (108 pass, 68 Q1 scanner
+dispositions) with Q1 UX (175 pass, one Mk5-only keypad disposition), Mk4
+BIP39 passphrases (94 pass, one Q1-only disposition), and Q1 offline teleport
+(21 pass). Q1's 34 Bitcoin Core dependent address, teleport, and signing
+tests passed against a locally pinned Bitcoin Core 32.0rc2 daemon. The daemon
+is isolated and terminated by the test fixture; the app's Bitcoin-Qt GUI
+exhibited a second-wallet RPC stall and is not used as test evidence.
+Individual excluded test IDs, counterpart passes, and reasons live in the
+skip ledgers under `artifacts/codex32/`.
+
+Broad Q1 offline signing and Mk5 backup qualification are in progress. The
+final Mk5 ephemeral regression, final source-revision Codex32 and persistence
+reruns, MK/Q1 recompilation, clean tagged-checkout reproduction, and local
+archive remain gates. An earlier Q1 signing diagnostic run exposed a test
+network mismatch and a missing SIGHASH_SINGLE warning policy; isolated
+corrected cases passed, but only the full rerun can qualify that suite. No
+test-release tag exists yet. Test artifacts from exploratory failures remain
+available and are not counted as passes.
+
 ## Qualification progress — October 3, 2026 (America/Chicago)
 
 All eight PR heads (#62–69) are merged locally on `codex/codex32-e2e`.

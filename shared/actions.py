@@ -2901,7 +2901,7 @@ async def codex32_shamir_split(*a):
             return
 
 async def codex32_shamir_recover(menu, label, item):
-    from codex32 import SECRET, generate_share
+    from codex32 import CW_HRP, CX_HRP, SECRET, generate_share
     from glob import dis
 
     ephemeral = item.arg
@@ -2928,6 +2928,22 @@ async def codex32_shamir_recover(menu, label, item):
                 pass
         finally:
             seed.blank_object(encoded)
+        if recovered.hrp == CW_HRP:
+            if not await ux_confirm(
+                    'CW1 restores English BIP-39 WORDS, not your passphrase.'
+                    ' The wallet initially uses the EMPTY passphrase.'
+                    '\n\nIf you used a passphrase, reapply the exact original one after'
+                    ' recovery and check a known address before relying on the wallet.',
+                    title='CW1 RECOVERY'):
+                return
+        elif recovered.hrp == CX_HRP:
+            if not await ux_confirm(
+                    'CX1 restores extended private-key material directly.'
+                    ' The original words and passphrase are NOT recovered or needed'
+                    ' to use these keys. Keep the original network, derivation paths'
+                    ' and any multisig descriptor separately; check a known address.',
+                    title='CX1 RECOVERY'):
+                return
         # A valid per-share checksum and matching headers do not authenticate
         # the set. In particular, one replaced share can select another wallet.
         if not await ux_confirm(

@@ -1451,8 +1451,16 @@ def recover_codex32_shares(goto_shamir_recover, cap_story, need_keypress, is_q1,
                 check_recover_story(story, threshold, uid, pos, first.hrp,
                                     indices=[s[8] for s in shares[:pos]], is_q1=is_q1)
 
+        time.sleep(.1)
+        if first.hrp in ('cw', 'cx'):
+            title, story = cap_story()
+            assert title == first.hrp.upper() + '1 RECOVERY'
+            assert 'known address' in story
+            if acknowledge:
+                press_select()
+            else:
+                return
         if acknowledge:
-            time.sleep(.1)
             title, story = cap_story()
             assert title == 'UNVERIFIED'
             assert 'known address' in story and 'UNVERIFIED' in story
@@ -1477,6 +1485,30 @@ def test_recovered_wallet_requires_unverified_acknowledgement(
     title, story = cap_story()
     assert title == 'UNVERIFIED'
     assert 'cannot prove it is your ORIGINAL wallet' in story
+    press_cancel()
+    assert active_secret() == before
+    reset_seed_words()
+
+
+@pytest.mark.parametrize('hrp', ['cw', 'cx'])
+def test_recovery_profile_warning_can_cancel_without_changing_wallet(
+        hrp, set_seed_words, settings_set, active_secret, recover_codex32_shares,
+        cap_story, press_cancel, reset_seed_words):
+    set_seed_words('extra sport youth surge capital category kid ginger extend way cause hamster')
+    settings_set('seedvault', False)
+    payload = bytes(range(16)) if hrp == 'cw' else bytes(range(32)) + bytes(31) + b'\x01'
+    secret = Share.from_seed(payload, hrp, 'test', SECRET, 2)
+    mask = Share.from_seed(bytes(range(len(payload))), hrp, 'test', 'a', 2, 0)
+    derived = generate_share([secret, mask], 'c')
+    before = active_secret()
+    recover_codex32_shares([mask.to_string(), derived.to_string()], 'sd', tmp=True,
+                           acknowledge=False)
+    title, story = cap_story()
+    assert title == hrp.upper() + '1 RECOVERY'
+    if hrp == 'cw':
+        assert 'EMPTY passphrase' in story and 'reapply the exact original' in story
+    else:
+        assert 'NOT recovered or needed' in story and 'multisig descriptor' in story
     press_cancel()
     assert active_secret() == before
     reset_seed_words()

@@ -48,7 +48,7 @@ def main():
     rolls = ''.join(sys.stdin.read().split())
     if not rolls or any(c not in '123456' for c in rolls):
         parser.error('rolls must contain only digits 1-6 (whitespace is ignored)')
-    minimum = 50 if args.bits == 128 else 99
+    minimum = 50 if args.bits == 128 else 100
     if len(rolls) < minimum:
         parser.error('at least %d rolls required' % minimum)
     if any(rolls.count(c) / len(rolls) > 0.30 for c in '123456'):

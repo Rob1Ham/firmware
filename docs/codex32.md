@@ -100,7 +100,10 @@ To create a temporary Codex32 wallet while another wallet is present, select:
 
 COLDCARD mixes its random sources with user-provided entropy and displays the
 resulting `ms1` secret with fixed ID `SEED`, index `S`, threshold `0` and zero
-padding. A verification quiz checks the recorded groups before the wallet is
+padding. **SEED is not a unique wallet ID:** unrelated standalone secrets all
+use it. Label each backup with its wallet fingerprint and an independently
+recorded address (including network, address type and derivation path). A
+verification quiz checks the recorded groups before the wallet is
 activated. Temporary-wallet creation also offers an explicit option to skip
 the quiz.
 
@@ -115,11 +118,28 @@ wallet; the default is a master wallet. Verify offline and keep inputs and
 output secret.
 
 For dice-only generation, select `Generate > Advanced > 128-bit Dice Roll`
-or `256-bit Dice Roll`. These require at least 50 or 99 rolls respectively.
+or `256-bit Dice Roll`. These require at least 50 or 100 rolls respectively.
 Generation aborts if any face occurs more than 30% of the time, even when the
 minimum roll count is met.
 The seed is SHA-256 of the entered roll digits (truncated to 16 bytes for
 128-bit), with no device randomness mixed in. The ID is always `SEED`.
+
+The count assumes independent, fair D6 rolls: 50 rolls can provide at most
+`50 × log2(6) ≈ 129.25` bits, while 99 rolls provide **less** than 256 bits
+(`≈ 255.91`); 100 provide `≈ 258.50`. Hashing does not create missing entropy.
+The 30% face-frequency cutoff detects some obvious problems but is not a
+debiasing algorithm or proof of randomness. The [Codex32 booklet](https://secretcodex32.com/docs/index.html)
+instead uses paired-roll (von Neumann) debiasing for hand-generated shares;
+its number of rolls varies with the dice and is separate from this device's
+dice-only SHA-256 flow.
+
+Shamir Split does **not** use your recorded dice rolls to make its masks. It
+uses new bytes from the device RNG to choose a four-character share-set ID and
+`k−1` independent random share payloads; the remaining shares are interpolated.
+Consequently a dice-only wallet can be verified from its rolls, but a subsequent
+on-device split still trusts the device RNG for the secrecy of individual shares.
+Share-set IDs are only 20 bits and may collide; matching IDs and checksums are
+not proof that shares belong together.
 
 Verify this using the standalone [rolls_codex32.py](rolls_codex32.py) script:
 

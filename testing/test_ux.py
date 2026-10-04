@@ -257,7 +257,7 @@ def test_import_from_dice(count, nwords, goto_home, pick_menu_item, cap_story, n
 
     time.sleep(0.1)
     title, body = cap_story()
-    threshold = 99 if nwords == 24 else 50
+    threshold = 100 if nwords == 24 else 50
     if count < threshold:
         assert 'Not enough dice rolls' in body
         assert str(len(gave)) in body

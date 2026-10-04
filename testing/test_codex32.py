@@ -1868,7 +1868,7 @@ def test_new_codex32_wallet(size, tmp, dice, unit_test, goto_codex32_menu, pick_
         pick_menu_item(size + ' Dice Roll')
         assert 'only source of randomness' in cap_story()[1]
         press_select()
-        rolls = ('123456' * 17)[:50 if size == '128-bit' else 99]
+        rolls = ('123456' * 17)[:50 if size == '128-bit' else 100]
         for ch in rolls[:-1]:
             need_keypress(ch)
         press_select()

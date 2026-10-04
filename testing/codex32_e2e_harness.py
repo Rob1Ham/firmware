@@ -6,6 +6,7 @@ Run from any directory with the isolated firmware checkout as --root.
 """
 
 import argparse
+import contextlib
 import hashlib
 import json
 import os
@@ -31,12 +32,16 @@ def as_text(value):
 
 
 def stop_group(proc):
-    if proc.poll() is None:
+    # The leader may exit while its children remain. Own and terminate the
+    # process group even in that case.
+    with contextlib.suppress(ProcessLookupError):
         os.killpg(proc.pid, signal.SIGTERM)
+    if proc.poll() is None:
         try:
             proc.wait(timeout=5)
         except subprocess.TimeoutExpired:
-            os.killpg(proc.pid, signal.SIGKILL)
+            with contextlib.suppress(ProcessLookupError):
+                os.killpg(proc.pid, signal.SIGKILL)
             proc.wait(timeout=5)
 
 
@@ -84,6 +89,24 @@ def parse_junit(path):
             counts['passed'] += 1
     counts['collected'] = len(cases)
     return {'counts': counts, 'ids': ids, 'skip_reasons': skip_reasons}
+
+
+def junit_id(collection_id):
+    """Map a pytest node ID to the JUnit classname/name convention."""
+    path, separator, name = collection_id.partition('::')
+    if not separator:
+        return collection_id
+    return path.removesuffix('.py').replace('/', '.') + '::' + name
+
+
+def skipped_are_disposed(skips, ledger, required_nodes):
+    for skip in skips:
+        item = ledger.get(skip['test'])
+        if (not item or not item.get('disposition') or
+                item.get('reason') not in skip['reason'] or
+                any(required in skip['test'] for required in required_nodes)):
+            return False
+    return True
 
 
 def collect(args, env, artifacts):
@@ -189,13 +212,20 @@ def attempt(args, env, artifacts, label, storage, expected_count):
             except (ET.ParseError, ValueError) as exc:
                 result['report_error'] = str(exc)
             counts = result.get('counts', {})
+            expected_ids = {junit_id(item) for item in args.selected_ids}
+            actual_ids = result.get('ids', [])
+            result['selected_ids_match'] = (len(actual_ids) == len(set(actual_ids))
+                                            and set(actual_ids) == expected_ids)
+            result['skips_disposed'] = skipped_are_disposed(
+                result.get('skip_reasons', []), args.skip_ledger,
+                args.require_node)
             result['ok'] = (result['exit_code'] == 0 and not result['timed_out']
                             and not result.get('report_error')
                             and counts.get('collected', 0) == expected_count
+                            and result['selected_ids_match']
                             and counts.get('failed', 0) == 0
                             and counts.get('error', 0) == 0
-                            and (counts.get('skipped', 0) == 0
-                                 or bool(args.skip_disposition)))
+                            and result['skips_disposed'])
             return result
         finally:
             stop_group(proc)
@@ -216,8 +246,8 @@ def main():
     parser.add_argument('--marks', default='not onetime and not veryslow and not manual')
     parser.add_argument('--setting', action='append', default=['nfc=1'])
     parser.add_argument('--headless', action='store_true')
-    parser.add_argument('--skip-disposition', default='',
-                        help='Explicit disposition for any skipped selected tests')
+    parser.add_argument('--skip-ledger', type=Path,
+                        help='JSON map of exact test IDs to reason substring and disposition')
     parser.add_argument('--allow-dirty', action='store_true',
                         help='Development runs only; final qualification requires committed source')
     parser.add_argument('--retry', action='store_true')
@@ -232,6 +262,7 @@ def main():
     args.python = Path(os.path.abspath(args.python))
     args.artifacts = args.artifacts.resolve()
     args.artifacts.mkdir(parents=True, exist_ok=True)
+    args.skip_ledger = json.loads(args.skip_ledger.read_text()) if args.skip_ledger else {}
     binary = (args.root / 'unix/coldcard-mpy').resolve()
     commit = subprocess.check_output(['git', '-C', str(args.root), 'rev-parse', 'HEAD'],
                                      text=True).strip()
@@ -251,6 +282,7 @@ def main():
         report['collection'] = collect(args, env, args.artifacts)
         if not report['collection']['ok']:
             raise RuntimeError('collection failed, selected no tests, or missed required node')
+        args.selected_ids = report['collection']['selected_ids']
         storage = args.storage.resolve() if args.storage else args.artifacts / 'storage'
         expected_count = report['collection']['selected_count']
         report['first_attempt'] = attempt(args, env, args.artifacts, 'first',

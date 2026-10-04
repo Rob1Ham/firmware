@@ -157,16 +157,15 @@ def collect_marked_tests(mark: str) -> List[str]:
 
 
 def get_last_failed() -> List[str]:
-    with open(".pytest_cache/v/cache/lastfailed", "r") as f:
-        res = f.read()
-    last_failed = json.loads(res)
-    return list(last_failed.keys())
+    try:
+        with open(".pytest_cache/v/cache/lastfailed", "r") as f:
+            return list(json.load(f).keys())
+    except (FileNotFoundError, ValueError):
+        return []
 
 
 def is_ok(ec: ExitCode) -> bool:
-    if ec in [ExitCode.OK, ExitCode.NO_TESTS_COLLECTED]:
-        return True
-    return False
+    return ec == ExitCode.OK
 
 
 def _run_pytest_tests(test_module: str, pytest_marks: str, pytest_k: str, pdb: bool,
@@ -234,8 +233,8 @@ def run_coldcard_tests(test_module=None, simulator_args=None, pytest_k=None, pdb
             exit_codes.append(exit_code_2)
             if not is_ok(exit_code_2):
                 failed.append(failed_test)
-        if all([ec == ExitCode.OK for ec in exit_codes]):
-            exit_code = ExitCode.OK
+        # A retry is diagnostic. The first failure remains the release result,
+        # including when the cache has no failing IDs (collection/crash case).
     return exit_code, failed
 
 
@@ -454,6 +453,7 @@ def main():
             num_proc *= 2
 
         procs = []
+        child_failures = []
         while True:
             # create as many processes as allowed by --num-proc (default=14)
             if q and (len(procs) < num_proc):
@@ -465,7 +465,7 @@ def main():
                     except IndexError:
                         # priority queue is empty
                         break
-                    sim = ColdcardSimulator(sim_args, segregate=True)
+                    sim = ColdcardSimulator(sim_args, headless=args.headless, segregate=True)
                     sim.start(start_wait=0)
 
                     if "--q1" in sim_args:
@@ -497,8 +497,16 @@ def main():
                     assert sim.socket
                     out_log_path = f"{log_dir}/%s.log" % (mn + mod_add)
                     out_fd = open(out_log_path, "w")
-                    cmd_list = ["pytest", "--cache-clear", "-m", DEFAULT_PYTEST_MARKS, "--sim",
-                                mn, "--sim-socket", sim.socket]
+                    cmd_list = ["pytest", mn, "--cache-clear", "-m", DEFAULT_PYTEST_MARKS,
+                                "--sim", "--sim-socket", sim.socket]
+                    if args.headless:
+                        cmd_list.append("--headless")
+                    if "--q1" in sim.args:
+                        cmd_list.append("--Q")
+                    elif "--mk4" in sim.args:
+                        cmd_list.extend(["--mk", "4"])
+                    else:
+                        cmd_list.extend(["--mk", "5"])
                     if args.psbt2:
                         cmd_list.append("--psbt2")
                     if k:
@@ -529,6 +537,8 @@ def main():
                 else:
                     # done
                     p.communicate()
+                    if p.returncode != 0:
+                        child_failures.append((mn, p.returncode))
                     out_fd.close()
                     sim.stop()
                     del procs[i]
@@ -538,7 +548,9 @@ def main():
 
         # multiprocess done
         print(f"\n\nelapsed: {str(timedelta(seconds=time.time()-start_time))}")
-        return
+        if child_failures:
+            print("FAILED CHILDREN", child_failures)
+        return 1 if child_failures else 0
 
     result = []
     for arguments in module_args:
@@ -605,19 +617,20 @@ def main():
 
     any_failed = False
     for module, ec, failed in result:
-        if not failed:
+        if is_ok(ec):
             continue
-        print(f"FAILED {module:40s} {failed}")
+        print(f"FAILED {module:40s} exit={ec} retry_failures={failed}")
         any_failed = True
 
     if any_failed is False:
         print("SUCCESS")
 
     print()
+    return 1 if any_failed else 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
     # sim = ColdcardSimulator(args=["--eff", "--segregate"])
     # sim.start()
     # import pdb;pdb.set_trace()

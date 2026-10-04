@@ -8,7 +8,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from codex32_e2e_harness import collect, parse_junit, run_logged
+from codex32_e2e_harness import (collect, junit_id, parse_junit, run_logged,
+                                 skipped_are_disposed)
 
 
 @pytest.mark.parametrize('code,expected', [
@@ -64,3 +65,19 @@ def test_empty_selection_is_not_success(tmp_path):
     result = collect(args, env, tmp_path)
     assert result['ok'] is False
     assert result['selected_count'] == 0
+
+
+def test_junit_ids_and_skip_dispositions_are_exact():
+    assert junit_id('test_codex32.py::test_roundtrip[ms16]') == \
+        'test_codex32::test_roundtrip[ms16]'
+    skips = [{'test': 'test_codex32::test_q1_only',
+              'reason': 'Q1 hardware profile required'}]
+    ledger = {'test_codex32::test_q1_only': {
+        'reason': 'Q1 hardware profile required',
+        'disposition': 'covered in Q1 display lane'}}
+    assert skipped_are_disposed(skips, ledger, [])
+    assert not skipped_are_disposed(skips, {}, [])
+    assert not skipped_are_disposed(skips, ledger, ['test_q1_only'])
+    assert not skipped_are_disposed(skips, {
+        'test_codex32::test_q1_only': {'reason': 'another reason',
+                                       'disposition': 'covered elsewhere'}}, [])

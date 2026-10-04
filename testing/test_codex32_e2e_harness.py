@@ -100,6 +100,24 @@ def test_empty_selection_is_not_success(tmp_path):
     assert result['selected_count'] == 0
 
 
+def test_frozen_coverage_rejects_disappearing_test(tmp_path, monkeypatch):
+    def collect_one(*args, **kwargs):
+        kwargs['log_path'].write_text('test_dummy.py::test_one\n1 test collected\n')
+        return {'exit_code': 0, 'timed_out': False}
+
+    monkeypatch.setattr(harness, 'run_logged', collect_one)
+    args = SimpleNamespace(python=Path(sys.executable), root=tmp_path,
+                           marks='not onetime and not veryslow and not manual',
+                           select='', target=['test_dummy.py'], collect_timeout=5,
+                           require_node=[],
+                           coverage_ids=['test_dummy.py::test_one',
+                                         'test_dummy.py::test_required'])
+    result = collect(args, os.environ.copy(), tmp_path)
+    assert result['ok'] is False
+    assert result['coverage_missing'] == ['test_dummy.py::test_required']
+    assert result['coverage_unexpected'] == []
+
+
 def test_junit_ids_and_skip_dispositions_are_exact():
     assert junit_id('test_codex32.py::test_roundtrip[ms16]') == \
         'test_codex32::test_roundtrip[ms16]'

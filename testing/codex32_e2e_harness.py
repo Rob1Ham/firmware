@@ -126,8 +126,16 @@ def collect(args, env, artifacts):
                 and not line.startswith('WARNING')]
     result['selected_ids'] = selected
     result['selected_count'] = len(selected)
+    expected = getattr(args, 'coverage_ids', None)
+    result['coverage_missing'] = sorted(set(expected) - set(selected)) if expected is not None else []
+    result['coverage_unexpected'] = sorted(set(selected) - set(expected)) if expected is not None else []
+    result['coverage_match'] = (expected is None or
+                                (len(selected) == len(expected) == len(set(selected))
+                                 and not result['coverage_missing']
+                                 and not result['coverage_unexpected']))
     result['ok'] = (result['exit_code'] == 0 and not result['timed_out']
-                    and bool(selected) and all(any(required in node for node in selected)
+                    and bool(selected) and result['coverage_match']
+                    and all(any(required in node for node in selected)
                                                for required in args.require_node))
     return result
 
@@ -251,6 +259,8 @@ def main():
     parser.add_argument('--headless', action='store_true')
     parser.add_argument('--skip-ledger', type=Path,
                         help='JSON map of exact test IDs to reason substring and disposition')
+    parser.add_argument('--coverage-manifest', type=Path,
+                        help='JSON with exact required collection IDs and mark expression')
     parser.add_argument('--allow-dirty', action='store_true',
                         help='Development runs only; final qualification requires committed source')
     parser.add_argument('--retry', action='store_true')
@@ -278,6 +288,19 @@ def main():
     env = dict(os.environ, PYSECP_SO=os.environ.get('PYSECP_SO',
                                                    '/opt/homebrew/lib/libsecp256k1.dylib'))
     try:
+        args.coverage_ids = None
+        if args.coverage_manifest:
+            coverage = json.loads(args.coverage_manifest.read_text())
+            ids = coverage['selected_ids']
+            if (coverage.get('schema_version') != 1 or not isinstance(ids, list)
+                    or not ids or len(ids) != len(set(ids))
+                    or coverage.get('marks') != args.marks
+                    or coverage.get('suite') not in args.target):
+                raise ValueError('invalid coverage manifest or different test selection')
+            args.coverage_ids = ids
+            report['coverage_manifest'] = {
+                'path': str(args.coverage_manifest.resolve()),
+                'sha256': sha256(args.coverage_manifest), 'required_count': len(ids)}
         if args.expect_commit and commit != args.expect_commit:
             raise RuntimeError('source commit differs from --expect-commit')
         if report['working_tree_status'] and not args.allow_dirty:

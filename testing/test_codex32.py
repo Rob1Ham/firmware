@@ -29,6 +29,11 @@ SHARES = [
 
 CW_SHARES = [Share.from_seed(bytes(range(size)), 'cw', 'test', SECRET, 2, 1).to_string()
              for size in (16, 24, 32)]
+MS_INTERMEDIATE = [
+    'ms10seedsqqqsyqcyq5rqwzqfpg9scrgwpugpzysn9vaqzzvs20xnl',
+    'ms10seedsyqsjygeyy5nzw2pf9g4jctfw9ucrzv3nxs6nvdau84gz0632s0xs',
+    'ms10seedsgpq5ys6yg4rywjzfff95cn2wfag9z5jn2324v46ct9d9hrcduqw8c3lccl',
+]
 CW_SHARE_A = Share.from_seed(bytes(range(16)), 'cw', 'test', 'a', 2, 3).to_string()
 
 IMPORT_SHARES = [
@@ -815,7 +820,7 @@ def pass_codex32_quiz(cap_story, need_keypress):
     return doit
 
 
-@pytest.mark.parametrize('share', SHARES + CW_SHARES)
+@pytest.mark.parametrize('share', SHARES + MS_INTERMEDIATE + CW_SHARES)
 def test_native_secret_survives_backup(share, set_encoded_secret, sim_exec, get_secrets):
     encoded = native_encoding(share)
     expected = encoded
@@ -840,6 +845,8 @@ def test_native_secret_survives_backup(share, set_encoded_secret, sim_exec, get_
 
 @pytest.mark.parametrize('share,display', [
     *[(share, 'master') for share in SHARES[:3]],
+    *[(Share.from_seed(bytes(range(size)), 'ms', 'test', SECRET, 0).to_string(), 'master')
+      for size in (20, 24, 28)],
     (SHARES[3], 'xprv'),
     *[(share, 'words') for share in CW_SHARES],
 ])
@@ -1220,6 +1227,9 @@ def test_shamir_split_m_of_m_warning_cancel(reset_seed_words, goto_shamir_split,
 @pytest.mark.parametrize('hrp,sec_len,m_n,way,initial_threshold', [
     ('ms', 16, (3, 5), 'sd', 0),
     ('ms', 16, (9, 9), 'nfc', 0),
+    ('ms', 20, (3, 5), 'sd', 0),
+    ('ms', 24, (3, 5), 'sd', 0),
+    ('ms', 28, (3, 5), 'sd', 0),
     ('ms', 32, (3, 5), 'qr', 0),
     ('ms', 32, (9, 9), 'sd', 0),
     ('ms', 64, (3, 5), 'nfc', 0),
@@ -1870,6 +1880,16 @@ def test_import_codex32_vectors(value, unit_test, import_codex32_ui,
     reset_seed_words()
 
 
+@pytest.mark.parametrize('value', MS_INTERMEDIATE)
+def test_import_bip93_intermediate_sizes(value, unit_test, import_codex32_ui,
+                                         expect_ftux, active_secret, reset_seed_words):
+    unit_test('devtest/clear_seed.py')
+    import_codex32_ui('sd', value)
+    expect_ftux()
+    assert active_secret() == native_encoding(value).hex()
+    reset_seed_words()
+
+
 @pytest.mark.parametrize('value', SHARES + CW_SHARES)
 @pytest.mark.parametrize('way,tmp', [
     ('sd', True),
@@ -2000,7 +2020,7 @@ def test_recover_does_not_use_seed_vault(reset_seed_words, settings_set, goto_sh
     reset_seed_words()
 
 
-@pytest.mark.parametrize('size', [24, 48])
+@pytest.mark.parametrize('size', [36, 48])
 def test_shamir_split_unsupported_master_size(size, reset_seed_words, set_encoded_secret,
                                              goto_shamir_split, shamir_split_settings,
                                              cap_story, sim_exec):
@@ -2010,6 +2030,6 @@ def test_shamir_split_unsupported_master_size(size, reset_seed_words, set_encode
     shamir_split_settings(3, 2)
     title, story = cap_story()
     assert title == 'FAILED'
-    assert 'MS1 requires a 128, 256 or 512-bit master seed.' in story
+    assert 'MS1 requires a 128, 160, 192, 224, 256 or 512-bit master seed.' in story
     assert sim_exec('from utils import B2A; RV.write(B2A(pa.fetch()))') == encoded.hex()
     reset_seed_words()

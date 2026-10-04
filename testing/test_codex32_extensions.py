@@ -68,6 +68,9 @@ def test_share_length_at_checksum_boundary(hrp, payload_length, checksum_length)
     'ms10leetsllhdmn9m42vcsamx24zrxgs3qrl7ahwvhw4fnzrhve25gvezzyq9dsuypw2ragmel',
     'ms10testsqqqsyqcyq5rqwzqfpg9scrgwpugpzysnzs23v9ccrydpk8qarc0j'
     'qgfzyvjz2f389q5j52ev95hz7vp3xgengdfkxuurjw3m8s7nu0ax3uvrcss9ddwnst',
+    'ms10seedsqqqsyqcyq5rqwzqfpg9scrgwpugpzysn9vaqzzvs20xnl',
+    'ms10seedsyqsjygeyy5nzw2pf9g4jctfw9ucrzv3nxs6nvdau84gz0632s0xs',
+    'ms10seedsgpq5ys6yg4rywjzfff95cn2wfag9z5jn2324v46ct9d9hrcduqw8c3lccl',
     'MS12W7F2AQQQSYQCYQ5RQWZQFPG9SCRGWPUAM077H9XN5W88',
     *[text for vector in SETS
       for text in [vector['secret'], vector['standalone'], *vector['shares']]],
@@ -85,7 +88,7 @@ def test_calculate_checksum_vectors(text):
         Share.parse(body)
 
 
-@pytest.mark.parametrize('hrp,lengths', [('ms', (26, 52, 103)),
+@pytest.mark.parametrize('hrp,lengths', [('ms', (26, 32, 39, 45, 52, 103)),
                                       ('cw', (26, 39, 52)), ('cx', (103,))])
 @pytest.mark.parametrize('length', [0, 25, 26, 27, 32, 33, 38, 39, 40,
                                   45, 46, 47, 51, 52, 53, 74, 75, 80, 81, 102, 103, 104])
@@ -96,6 +99,13 @@ def test_calculate_checksum_lengths(hrp, lengths, length):
     else:
         with pytest.raises((AssertionError, ValueError)):
             Share.from_body(body)
+
+
+@pytest.mark.parametrize('size', [36, 40, 48, 60])
+def test_ms_rejects_non_bip93_master_seed_sizes(size):
+    candidate = Share.from_seed(bytes(range(size)), 'ms', 'test', 's', 0)
+    with pytest.raises(AssertionError, match='ms codex32 length'):
+        Share.parse(candidate.to_string())
 
 
 @pytest.mark.parametrize('header', ['', 'ms', 'ms1', 'ms12', 'ms12tes',

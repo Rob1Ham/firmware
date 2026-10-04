@@ -656,7 +656,7 @@ def render_master_secrets(mode, raw, node):
 
         qr = str(b2a_hex(raw), 'ascii')
         msg = '%d bytes:\n\n%s' % (len(raw), qr)
-        if len(raw) in (16, 32, 64):
+        if len(raw) in (16, 20, 24, 28, 32, 64):
             qr = Share.from_seed(raw, MS_HRP, SECRET_ID, SECRET, 0).to_string()
             msg = 'Codex32:\n\n' + render_codex32(qr) + '\n\n' + msg
             qr_alnum = True
@@ -2809,7 +2809,8 @@ async def codex32_shamir_split(*a):
             if sv.mode == 'words':
                 secret_share = Share.from_seed(sv.raw, CW_HRP, uid, SECRET, threshold)
             elif sv.mode == 'master':
-                assert len(sv.raw) in (16, 32, 64), 'MS1 requires a 128, 256 or 512-bit master seed.'
+                assert len(sv.raw) in (16, 20, 24, 28, 32, 64), \
+                    'MS1 requires a 128, 160, 192, 224, 256 or 512-bit master seed.'
                 secret_share = Share.from_seed(sv.raw, MS_HRP, uid, SECRET, threshold)
             else:
                 # CX1 - root key - stripped from metadata

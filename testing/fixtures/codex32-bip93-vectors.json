@@ -1,0 +1,368 @@
+{
+  "source": {
+    "repository": "https://github.com/bitcoin/bips",
+    "commit": "927b6de9915c9262615a6399de51b200f81e5aa4",
+    "path": "bip-0093.mediawiki",
+    "sha256": "c847c6e513b64ee6ab10975690757d64a875f77c0e75866a86b733f3985784ec"
+  },
+  "valid": [
+    {
+      "id": "valid-01",
+      "encoded": "ms10testsxxxxxxxxxxxxxxxxxxxxxxxxxx4nzvca9cmczlw"
+    },
+    {
+      "id": "valid-02",
+      "encoded": "MS12NAMEA320ZYXWVUTSRQPNMLKJHGFEDCAXRPP870HKKQRM"
+    },
+    {
+      "id": "valid-03",
+      "encoded": "MS12NAMECACDEFGHJKLMNPQRSTUVWXYZ023FTR2GDZMPY6PN"
+    },
+    {
+      "id": "valid-04",
+      "encoded": "MS12NAMEDLL4F8JLH4E5VDVULDLFXU2JHDNLSM97XVENRXEG"
+    },
+    {
+      "id": "valid-05",
+      "encoded": "MS12NAMES6XQGUZTTXKEQNJSJZV4JV3NZ5K3KWGSPHUH6EVW"
+    },
+    {
+      "id": "valid-06",
+      "encoded": "ms13cashsllhdmn9m42vcsamx24zrxgs3qqjzqud4m0d6nln"
+    },
+    {
+      "id": "valid-07",
+      "encoded": "ms13casha320zyxwvutsrqpnmlkjhgfedca2a8d0zehn8a0t"
+    },
+    {
+      "id": "valid-08",
+      "encoded": "ms13cashcacdefghjklmnpqrstuvwxyz023949xq35my48dr"
+    },
+    {
+      "id": "valid-09",
+      "encoded": "ms13cashd0wsedstcdcts64cd7wvy4m90lm28w4ffupqs7rm"
+    },
+    {
+      "id": "valid-10",
+      "encoded": "ms13casheekgpemxzshcrmqhaydlp6yhms3ws7320xyxsar9"
+    },
+    {
+      "id": "valid-11",
+      "encoded": "ms13cashf8jh6sdrkpyrsp5ut94pj8ktehhw2hfvyrj48704"
+    },
+    {
+      "id": "valid-12",
+      "encoded": "ms13cashsllhdmn9m42vcsamx24zrxgs3qpte35dvzkjpt0r"
+    },
+    {
+      "id": "valid-13",
+      "encoded": "ms13cashsllhdmn9m42vcsamx24zrxgs3qzfatvdwq5692k6"
+    },
+    {
+      "id": "valid-14",
+      "encoded": "ms13cashsllhdmn9m42vcsamx24zrxgs3qrsx6ydhed97jx2"
+    },
+    {
+      "id": "valid-15",
+      "encoded": "ms10leetsllhdmn9m42vcsamx24zrxgs3qrl7ahwvhw4fnzrhve25gvezzyqqtum9pgv99ycma"
+    },
+    {
+      "id": "valid-16",
+      "encoded": "ms10leetsllhdmn9m42vcsamx24zrxgs3qrl7ahwvhw4fnzrhve25gvezzyqpj82dp34u6lqtd"
+    },
+    {
+      "id": "valid-17",
+      "encoded": "ms10leetsllhdmn9m42vcsamx24zrxgs3qrl7ahwvhw4fnzrhve25gvezzyqzsrs4pnh7jmpj5"
+    },
+    {
+      "id": "valid-18",
+      "encoded": "ms10leetsllhdmn9m42vcsamx24zrxgs3qrl7ahwvhw4fnzrhve25gvezzyqrfcpap2w8dqezy"
+    },
+    {
+      "id": "valid-19",
+      "encoded": "ms10leetsllhdmn9m42vcsamx24zrxgs3qrl7ahwvhw4fnzrhve25gvezzyqy5tdvphn6znrf0"
+    },
+    {
+      "id": "valid-20",
+      "encoded": "ms10leetsllhdmn9m42vcsamx24zrxgs3qrl7ahwvhw4fnzrhve25gvezzyq9dsuypw2ragmel"
+    },
+    {
+      "id": "valid-21",
+      "encoded": "ms10leetsllhdmn9m42vcsamx24zrxgs3qrl7ahwvhw4fnzrhve25gvezzyqx05xupvgp4v6qx"
+    },
+    {
+      "id": "valid-22",
+      "encoded": "ms10leetsllhdmn9m42vcsamx24zrxgs3qrl7ahwvhw4fnzrhve25gvezzyq8k0h5p43c2hzsk"
+    },
+    {
+      "id": "valid-23",
+      "encoded": "ms10leetsllhdmn9m42vcsamx24zrxgs3qrl7ahwvhw4fnzrhve25gvezzyqgum7hplmjtr8ks"
+    },
+    {
+      "id": "valid-24",
+      "encoded": "ms10leetsllhdmn9m42vcsamx24zrxgs3qrl7ahwvhw4fnzrhve25gvezzyqf9q0lpxzt5clxq"
+    },
+    {
+      "id": "valid-25",
+      "encoded": "ms10leetsllhdmn9m42vcsamx24zrxgs3qrl7ahwvhw4fnzrhve25gvezzyq28y48pyqfuu7le"
+    },
+    {
+      "id": "valid-26",
+      "encoded": "ms10leetsllhdmn9m42vcsamx24zrxgs3qrl7ahwvhw4fnzrhve25gvezzyqt7ly0paesr8x0f"
+    },
+    {
+      "id": "valid-27",
+      "encoded": "ms10leetsllhdmn9m42vcsamx24zrxgs3qrl7ahwvhw4fnzrhve25gvezzyqvrvg7pqydv5uyz"
+    },
+    {
+      "id": "valid-28",
+      "encoded": "ms10leetsllhdmn9m42vcsamx24zrxgs3qrl7ahwvhw4fnzrhve25gvezzyqd6hekpea5n0y5j"
+    },
+    {
+      "id": "valid-29",
+      "encoded": "ms10leetsllhdmn9m42vcsamx24zrxgs3qrl7ahwvhw4fnzrhve25gvezzyqwcnrwpmlkmt9dt"
+    },
+    {
+      "id": "valid-30",
+      "encoded": "ms10leetsllhdmn9m42vcsamx24zrxgs3qrl7ahwvhw4fnzrhve25gvezzyq0pgjxpzx0ysaam"
+    },
+    {
+      "id": "valid-31",
+      "encoded": "MS100C8VSM32ZXFGUHPCHTLUPZRY9X8GF2TVDW0S3JN54KHCE6MUA7LQPZYGSFJD6AN074RXVCEMLH8WU3TK925ACDEFGHJKLMNPQRSTUVWXY06FHPV80UNDVARHRAK"
+    },
+    {
+      "id": "valid-32",
+      "encoded": "ms10seedsqqqsyqcyq5rqwzqfpg9scrgwpugpzysn9vaqzzvs20xnl"
+    },
+    {
+      "id": "valid-33",
+      "encoded": "ms10seedsyqsjygeyy5nzw2pf9g4jctfw9ucrzv3nxs6nvdau84gz0632s0xs"
+    },
+    {
+      "id": "valid-34",
+      "encoded": "ms10seedsgpq5ys6yg4rywjzfff95cn2wfag9z5jn2324v46ct9d9hrcduqw8c3lccl"
+    }
+  ],
+  "invalid": [
+    {
+      "id": "invalid-01",
+      "encoded": "ms10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxve740yyge2ghq"
+    },
+    {
+      "id": "invalid-02",
+      "encoded": "ms10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxve740yyge2ghp"
+    },
+    {
+      "id": "invalid-03",
+      "encoded": "ms10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxxxlk3yepcstwr"
+    },
+    {
+      "id": "invalid-04",
+      "encoded": "ms10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxx6pgnv7jnpcsp"
+    },
+    {
+      "id": "invalid-05",
+      "encoded": "ms10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxxx0cpvr7n4geq"
+    },
+    {
+      "id": "invalid-06",
+      "encoded": "ms10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxxxm5252y7d3lr"
+    },
+    {
+      "id": "invalid-07",
+      "encoded": "ms10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxxrd9sukzl05ej"
+    },
+    {
+      "id": "invalid-08",
+      "encoded": "ms10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxxxc55srw5jrm0"
+    },
+    {
+      "id": "invalid-09",
+      "encoded": "ms10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxxxgc7rwhtudwc"
+    },
+    {
+      "id": "invalid-10",
+      "encoded": "ms10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxx4gy22afwghvs"
+    },
+    {
+      "id": "invalid-11",
+      "encoded": "ms10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxme084q0vpht7pe0"
+    },
+    {
+      "id": "invalid-12",
+      "encoded": "ms10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxme084q0vpht7pew"
+    },
+    {
+      "id": "invalid-13",
+      "encoded": "ms10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxqyadsp3nywm8a"
+    },
+    {
+      "id": "invalid-14",
+      "encoded": "ms10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxzvg7ar4hgaejk"
+    },
+    {
+      "id": "invalid-15",
+      "encoded": "ms10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxcznau0advgxqe"
+    },
+    {
+      "id": "invalid-16",
+      "encoded": "ms10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxch3jrc6j5040j"
+    },
+    {
+      "id": "invalid-17",
+      "encoded": "ms10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx52gxl6ppv40mcv"
+    },
+    {
+      "id": "invalid-18",
+      "encoded": "ms10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx7g4g2nhhle8fk"
+    },
+    {
+      "id": "invalid-19",
+      "encoded": "ms10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx63m45uj8ss4x8"
+    },
+    {
+      "id": "invalid-20",
+      "encoded": "ms10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxy4r708q7kg65x"
+    },
+    {
+      "id": "invalid-21",
+      "encoded": "ms10fauxsxxxxxxxxxxxxxxxxxxxxxxxxurfvwmdcmymdufv"
+    },
+    {
+      "id": "invalid-22",
+      "encoded": "ms10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxcwm4re8fs78vn"
+    },
+    {
+      "id": "invalid-23",
+      "encoded": "ms10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxwqey9rfs6smenxa"
+    },
+    {
+      "id": "invalid-24",
+      "encoded": "ms10fauxsxxxxxxxxxxxxxxxxxxxxxxxxw0a4c70rfefn4"
+    },
+    {
+      "id": "invalid-25",
+      "encoded": "ms10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxk4pavy5n46nea"
+    },
+    {
+      "id": "invalid-26",
+      "encoded": "ms10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxx9lrwar5zwng4w"
+    },
+    {
+      "id": "invalid-27",
+      "encoded": "ms10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxr335l5tv88js3"
+    },
+    {
+      "id": "invalid-28",
+      "encoded": "ms10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxvu7q9nz8p7dj68v"
+    },
+    {
+      "id": "invalid-29",
+      "encoded": "ms10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxpq6k542scdxndq3"
+    },
+    {
+      "id": "invalid-30",
+      "encoded": "ms10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxkmfw6jm270mz6ej"
+    },
+    {
+      "id": "invalid-31",
+      "encoded": "ms12fauxxxxxxxxxxxxxxxxxxxxxxxxxxzhddxw99w7xws"
+    },
+    {
+      "id": "invalid-32",
+      "encoded": "ms12fauxxxxxxxxxxxxxxxxxxxxxxxxxxxx42cux6um92rz"
+    },
+    {
+      "id": "invalid-33",
+      "encoded": "ms12fauxxxxxxxxxxxxxxxxxxxxxxxxxxxxxarja5kqukdhy9"
+    },
+    {
+      "id": "invalid-34",
+      "encoded": "ms12fauxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxky0ua3ha84qk8"
+    },
+    {
+      "id": "invalid-35",
+      "encoded": "ms12fauxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx9eheesxadh2n2n9"
+    },
+    {
+      "id": "invalid-36",
+      "encoded": "ms12fauxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx9llwmgesfulcj2z"
+    },
+    {
+      "id": "invalid-37",
+      "encoded": "ms12fauxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx02ev7caq6n9fgkf"
+    },
+    {
+      "id": "invalid-38",
+      "encoded": "ms10fauxxxxxxxxxxxxxxxxxxxxxxxxxxxx0z26tfn0ulw3p"
+    },
+    {
+      "id": "invalid-39",
+      "encoded": "ms1fauxxxxxxxxxxxxxxxxxxxxxxxxxxxxxda3kr3s0s2swg"
+    },
+    {
+      "id": "invalid-40",
+      "encoded": "0fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxuqxkk05lyf3x2"
+    },
+    {
+      "id": "invalid-41",
+      "encoded": "10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxuqxkk05lyf3x2"
+    },
+    {
+      "id": "invalid-42",
+      "encoded": "ms0fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxuqxkk05lyf3x2"
+    },
+    {
+      "id": "invalid-43",
+      "encoded": "m10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxuqxkk05lyf3x2"
+    },
+    {
+      "id": "invalid-44",
+      "encoded": "s10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxuqxkk05lyf3x2"
+    },
+    {
+      "id": "invalid-45",
+      "encoded": "0fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxhkd4f70m8lgws"
+    },
+    {
+      "id": "invalid-46",
+      "encoded": "10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxhkd4f70m8lgws"
+    },
+    {
+      "id": "invalid-47",
+      "encoded": "m10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxx8t28z74x8hs4l"
+    },
+    {
+      "id": "invalid-48",
+      "encoded": "s10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxh9d0fhnvfyx3x"
+    },
+    {
+      "id": "invalid-49",
+      "encoded": "Ms10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxuqxkk05lyf3x2"
+    },
+    {
+      "id": "invalid-50",
+      "encoded": "mS10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxuqxkk05lyf3x2"
+    },
+    {
+      "id": "invalid-51",
+      "encoded": "MS10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxuqxkk05lyf3x2"
+    },
+    {
+      "id": "invalid-52",
+      "encoded": "ms10FAUXsxxxxxxxxxxxxxxxxxxxxxxxxxxuqxkk05lyf3x2"
+    },
+    {
+      "id": "invalid-53",
+      "encoded": "ms10fauxSxxxxxxxxxxxxxxxxxxxxxxxxxxuqxkk05lyf3x2"
+    },
+    {
+      "id": "invalid-54",
+      "encoded": "ms10fauxsXXXXXXXXXXXXXXXXXXXXXXXXXXuqxkk05lyf3x2"
+    },
+    {
+      "id": "invalid-55",
+      "encoded": "ms10fauxsxxxxxxxxxxxxxxxxxxxxxxxxxxUQXKK05LYF3X2"
+    }
+  ]
+}

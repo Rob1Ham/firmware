@@ -1,0 +1,33 @@
+# see also? ../cli/requirements.txt
+
+# for testing (only)
+pytest==6.2.5
+pyserial
+ecdsa  # already required by ckcc-protocol
+python-secp256k1==0.2.0
+mnemonic==0.18
+onetimepass==1.0.1
+
+# for QR scanning (pulls in numpy)
+zbar-py==1.0.4
+
+# NFC and NDEF handling
+nfcpy==1.0.3
+
+# optional, and only helpful if you have a desktop NFC-V capable reader
+# 2.0.2 fails to compile against swig 4.3+ (undeclared identifier '$function')
+pyscard==2.3.1
+
+# BSMS library
+git+https://github.com/coinkite/bsms-bitcoin-secure-multisig-setup.git@c30abe3a6d9823b6a3003e89acd66b9f38e11f1c#egg=bsms-bitcoin-secure-multisig-setup
+
+# BBQr library
+git+https://github.com/coinkite/BBQr.git@8dc7ef07d0d520763cc0001a885ca8d29ac8719a#egg=bbqr&subdirectory=python
+
+# for backend testing
+requests==2.33.0
+
+# Simulator display and pinned local protocol submodule
+PySDL2
+Pillow
+./external/ckcc-protocol

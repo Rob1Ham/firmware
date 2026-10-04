@@ -44,7 +44,8 @@ SEQUENCE_LOCKTIME_TYPE_FLAG = (1 << 22)
 @pytest.mark.parametrize('style', ['p2pkh', 'p2wpkh', 'p2wpkh-p2sh'])
 @pytest.mark.parametrize('finalize', [False, True])
 def test_codex32_signing_matches_xprv(value, style, finalize, set_master_key,
-                                    set_encoded_secret, fake_txn, try_sign, dev, sim_exec):
+                                    set_encoded_secret, fake_txn, try_sign, dev, sim_exec,
+                                    settings_set):
     share = Share.parse(value)
     assert share.to_seed_and_pad()[1]  # Include otherwise-lost padding bits.
     node = bip32_node_from_codex32_share(share)
@@ -52,6 +53,7 @@ def test_codex32_signing_matches_xprv(value, style, finalize, set_master_key,
 
     # Establish the signing result using the equivalent ordinary XPRV wallet.
     set_master_key(node.hwif(as_private=True))
+    settings_set('chain', 'XTN')
     psbt = fake_txn(2, 2, master_xpub=node.hwif(), segwit_in=style != 'p2pkh',
                     wrapped=style == 'p2wpkh-p2sh', outstyles=[style], change_outputs=[1])
     _, expected = try_sign(psbt, finalize=finalize)
@@ -72,6 +74,7 @@ def test_codex32_signing_matches_xprv(value, style, finalize, set_master_key,
 
     # Reuse identical PSBT bytes: deterministic signatures must match exactly.
     set_encoded_secret(encoded)
+    settings_set('chain', 'XTN')
     assert dev.send_recv(CCProtocolPacker.get_xpub()) == node.hwif()
     _, actual = try_sign(psbt, finalize=finalize)
     assert actual == expected
@@ -3743,7 +3746,7 @@ def test_txout_explorer(chain, data, fake_txn, start_sign, settings_set, txout_e
 @pytest.mark.parametrize("chain", ["BTC", "XTN"])
 @pytest.mark.parametrize("addr_fmt", ["p2wpkh", "p2pkh", "p2wpkh-p2sh"])
 def test_txin_explorer(chain, addr_fmt, fake_txn, start_sign, settings_set, txin_explorer,
-                       cap_story, pytestconfig):
+                       cap_story, pytestconfig, settings_get, settings_remove, request):
     # TODO This test MUST be run with --psbt2 flag on and off
     settings_set("chain", chain)
     inp_amount = 1000000
@@ -3768,6 +3771,17 @@ def test_txin_explorer(chain, addr_fmt, fake_txn, start_sign, settings_set, txin
     psbt = fake_txn(num_ins, 1, segwit_in=segwit, wrapped=wrapped,
                     psbt_v2=pytestconfig.getoption('psbt2'), input_amount=inp_amount,
                     sequences=[seq], sighashes=[sh])
+
+    # Explore unusual SIGHASH inputs under the explicit warning policy. The
+    # default block policy is exercised separately by the rejection tests.
+    previous = settings_get('sighshchk')
+    settings_set('sighshchk', 1)
+    def restore_sighash_policy():
+        if previous is None:
+            settings_remove('sighshchk')
+        else:
+            settings_set('sighshchk', previous)
+    request.addfinalizer(restore_sighash_policy)
 
     start_sign(psbt)
     txin_explorer(num_ins, [(addr_fmt, inp_amount, 1, chain, False, sh, seq)])

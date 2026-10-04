@@ -2715,7 +2715,7 @@ def txin_explorer(cap_story, press_cancel, need_keypress, is_q1, cap_menu,
 
         time.sleep(.1)
         title, story = cap_story()
-        assert title == 'OK TO SEND?'
+        assert title == 'OK TO SEND?', (title, story)
         assert "Press (2) to explore transaction" in story
         need_keypress("2")
         time.sleep(.1)

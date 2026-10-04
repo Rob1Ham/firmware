@@ -3,6 +3,7 @@
 # needs local bitcoind in PATH
 
 import os, time, uuid, socket, shutil, pytest, tempfile, subprocess, signal, base64
+from contextlib import suppress
 from authproxy import AuthServiceProxy, JSONRPCException
 from helpers import xfp2str
 from ckcc.protocol import CCProtocolPacker
@@ -70,18 +71,18 @@ class Bitcoind:
                 "-listen=0",
                 f"-port={self.p2p_port}",
                 f"-rpcport={self.rpc_port}",
-            ]
+            ],
+            start_new_session=True,
         )
-        signal.signal(signal.SIGTERM, self.cleanup)
 
         # Wait for cookie file to be created
         cookie_path = os.path.join(self.datadir, "regtest", ".cookie")
-        for i in range(20):
+        for i in range(BITCOIND_RPC_TIMEOUT * 2):
             if os.path.exists(cookie_path):
                 break
             time.sleep(0.5)
         else:
-            RuntimeError("'.cookie' not found. Is bitcoind running?")
+            raise RuntimeError("'.cookie' not found. Is bitcoind running?")
         # Read .cookie file to get user and pass
         with open(cookie_path) as f:
             self.userpass = f.readline().lstrip().rstrip()
@@ -89,14 +90,15 @@ class Bitcoind:
         self.rpc = AuthServiceProxy(self.rpc_url, timeout=BITCOIND_RPC_TIMEOUT)
 
         # Wait for bitcoind to be ready
-        ready = False
-        while not ready:
+        deadline = time.monotonic() + BITCOIND_RPC_TIMEOUT
+        while True:
             try:
                 self.rpc.getblockchaininfo()
-                ready = True
-            except JSONRPCException:
+                break
+            except Exception as exc:
+                if time.monotonic() >= deadline:
+                    raise TimeoutError('bitcoind RPC readiness timed out') from exc
                 time.sleep(0.5)
-                pass
 
         assert self.rpc.getblockchaininfo()['chain'] == 'regtest'
         self.version = self.rpc.getnetworkinfo()['version']
@@ -129,9 +131,15 @@ class Bitcoind:
 
     def cleanup(self, *args, **kwargs):
         if self.bitcoind_proc is not None and self.bitcoind_proc.poll() is None:
-            self.bitcoind_proc.kill()
-        time.sleep(0.5)
-        shutil.rmtree(self.datadir)
+            with suppress(ProcessLookupError):
+                os.killpg(self.bitcoind_proc.pid, signal.SIGTERM)
+            try:
+                self.bitcoind_proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                with suppress(ProcessLookupError):
+                    os.killpg(self.bitcoind_proc.pid, signal.SIGKILL)
+                self.bitcoind_proc.wait(timeout=5)
+        shutil.rmtree(self.datadir, ignore_errors=True)
 
     def delete_wallet_files(self, pattern=None):
         wallets_dir = os.path.join(self.datadir, "regtest/wallets")
@@ -148,7 +156,11 @@ class Bitcoind:
     @staticmethod
     def create(*args, **kwargs):
         c = Bitcoind(*args, **kwargs)
-        c.start()
+        try:
+            c.start()
+        except BaseException:
+            c.cleanup()
+            raise
         return c
 
 
@@ -157,8 +169,10 @@ def bitcoind():
     # JSON-RPC connection to a bitcoind instance
     # this assumes that you have bitcoind in path somewhere
     bitcoin_d = Bitcoind.create()
-    yield bitcoin_d
-    os.killpg(os.getpgid(bitcoin_d.bitcoind_proc.pid), signal.SIGTERM)
+    try:
+        yield bitcoin_d
+    finally:
+        bitcoin_d.cleanup()
 
 
 @pytest.fixture

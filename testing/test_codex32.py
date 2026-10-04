@@ -299,12 +299,16 @@ def test_calculate_checksum_manual(text, goto_codex32_menu, pick_menu_item, cap_
     assert ('(0) to use as temporary seed' in story) == is_secret
     assert '(0) to use as master seed' not in story
     for way, path_f in [('sd', microsd_path), ('vdisk', virtdisk_path)]:
-        if way == 'sd':
-            need_keypress('1')
-        exported, fname = load_export(way, label=None, is_json=False, ret_fname=True)
-        garbage_collector.append(path_f(fname))
-        garbage_collector.append(path_f(fname.rsplit('.', 1)[0] + '.sig'))
-        assert exported == text.upper()
+        need_keypress('1' if way == 'sd' else '2')
+        time.sleep(.2)
+        saved_story = cap_story()[1]
+        assert "Share '%s' written:" % text[8].upper() in saved_story
+        fname = saved_story.split('\n\n')[1]
+        path = path_f(fname)
+        garbage_collector.append(path)
+        assert not os.path.exists(path.rsplit('.', 1)[0] + '.sig')
+        with open(path) as fd:
+            assert fd.read() == text.upper()
         press_cancel()
         time.sleep(.2)
     assert load_export('nfc', label=None, is_json=False) == text.upper()
@@ -772,7 +776,10 @@ def export_shares(cap_story, press_select, cap_menu, pick_menu_item, need_keypre
                 value, fname = value
                 path_f = microsd_path if way == 'sd' else virtdisk_path
                 garbage_collector.append(path_f(fname))
-                garbage_collector.append(path_f(fname.rsplit('.', 1)[0] + '.sig'))
+                sig_path = path_f(fname.rsplit('.', 1)[0] + '.sig')
+                assert os.path.exists(sig_path)
+                assert 'Signature:' in cap_story()[1]
+                garbage_collector.append(sig_path)
                 fnames.append(fname)
             assert value == share.to_string()
             shares.append(share)
@@ -1799,11 +1806,10 @@ def test_derive_codex32_shares(hrp, size, state, threshold, reset_seed_words, un
         need_keypress('1')
         story = cap_story()[1]
         assert 'written:' in story
-        assert ('Signature:' in story) == (state != 'blank')
+        assert 'Signature:' not in story
         path = microsd_path(story.split('\n\n')[1])
         garbage_collector.append(path)
-        if state != 'blank':
-            garbage_collector.append(microsd_path(story.split('\n\n')[-1]))
+        assert not os.path.exists(path.rsplit('.', 1)[0] + '.sig')
         with open(path) as fd:
             assert fd.read() == value
         press_cancel()  # export result

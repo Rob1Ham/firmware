@@ -248,6 +248,13 @@ and export it by QR, NFC, MicroSD, or Virtual Disk as available. File exports
 are written as `<id>_share_<index>.txt`. A signature file is also written when a
 master or temporary wallet is available.
 
+Only shares produced by **Shamir Split** are signed on export. **Derive Shares**
+and **Calculate Checksum** may handle shares for wallets unrelated to the one
+currently active, so their file exports are not signed by that wallet. A file
+signature attests who signed those file bytes; it does not prove that the
+signed share set reconstructs the signer's wallet. Check a recovered wallet
+against an independently recorded address before relying on it.
+
 Text files, QR codes, and NFC exports contain the share in plaintext. The
 signature file does not encrypt it. Keep fewer than the threshold number of
 shares on any one storage medium.
@@ -358,6 +365,8 @@ You can select multiple outputs or reproduce the same output later from any
 threshold set. This also works with existing `cx1` and `cw1` sets. Exiting
 discards the session; derivation does not activate a wallet or save shares to
 Seed Vault.
+Derived share file exports are not signed by the active wallet because that
+wallet need not be related to the collected shares.
 
 The device collecting a threshold can calculate the combined secret, even
 though this flow only exports shares. Trust it accordingly. Recovering `S`

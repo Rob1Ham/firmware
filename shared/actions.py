@@ -2729,11 +2729,14 @@ async def pushtx_setup_menu(*a):
     return MenuSystem(choices, chosen=cur)
 
 async def shamir_share_story(menu, label, item):
-    await show_shamir_share(*item.arg)
+    # Only Shamir Split knows these shares were made from the active wallet.
+    await show_shamir_share(*item.arg, sign_export=True)
 
-async def show_shamir_share(value, uid, intro=None, ephemeral=None):
+async def show_shamir_share(value, uid, intro=None, ephemeral=None, sign_export=False):
     # ephemeral=None: no activation offered; True/False: offer activation as
     # temporary or master seed for secret shares (index S) only.
+    # Derived and checksum-completed shares may belong to an unrelated wallet:
+    # signing them with the active wallet would imply a false provenance link.
     from glob import NFC, dis
     from seed import render_codex32
 
@@ -2769,7 +2772,7 @@ async def show_shamir_share(value, uid, intro=None, ephemeral=None):
                         fd.write(value)
 
                     signature = ''
-                    if pa.has_secrets():
+                    if sign_export and pa.has_secrets():
                         digest = ngu.hash.sha256s(value.encode())
                         signature = '\n\nSignature:\n\n' + write_sig_file([(digest, fname)])
 

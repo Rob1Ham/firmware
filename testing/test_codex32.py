@@ -339,6 +339,9 @@ def test_calculate_checksum_full_share(text, goto_codex32_menu, pick_menu_item,
     checksum_len = 15 if len(text) == 127 else 13
     enter_bech32(' '.join(text.lower()[i:i+4] for i in range(0, len(text), 4)))
     time.sleep(.2)
+    if text[:3].lower() == 'cw1' and len(text) in (48, 61):
+        assert cap_story()[0] == 'CHECK LENGTH'
+        press_select()  # Interpret as a complete share and validate its checksum.
     title, story = cap_story()
     assert title == "Share '%s'" % text[8].upper()
     assert 'Checksum:\n\n' + text[-checksum_len:].upper() in story
@@ -362,8 +365,8 @@ def test_calculate_checksum_damaged_complete_cw_requires_longer_size_confirmatio
     enter_bech32(damaged)
     title, story = cap_story()
     assert title == 'CHECK LENGTH'
-    assert 'failed validation as a complete' in story
-    press_cancel()  # Do not reinterpret a bad checksum as new wallet data.
+    assert 'complete' in story and 'without a checksum' in story
+    press_select()  # Validate as a complete share; do not seal damaged data.
     assert cap_story()[0] == 'FAILED'
     assert 'invalid checksum' in cap_story()[1]
     assert active_secret() == before
@@ -381,10 +384,26 @@ def test_calculate_checksum_cw_body_explicit_longer_size(
     need_keypress('0')
     enter_bech32(share.to_string()[:-13])
     assert cap_story()[0] == 'CHECK LENGTH'
-    press_select()  # Confirm that the input is a checksum-less, longer CW1 body.
+    need_keypress('1')  # Choose the longer checksum-less body explicitly.
     title, story = cap_story()
     assert title == "Share 'S'"
     assert parse_rendered_codex32(story.split('Codex32:', 1)[1]) == share.to_string()
+    press_cancel()
+
+
+def test_calculate_checksum_valid_short_cw_is_also_longer_body(
+        goto_codex32_menu, pick_menu_item, cap_story, enter_bech32,
+        need_keypress, press_cancel, is_q1):
+    shorter = Share.from_seed(bytes(range(16)), 'cw', 'test', SECRET, 2).to_string()
+    longer = Share.from_body(shorter)
+    assert len(longer.to_seed_and_pad()[0]) == 24
+    goto_codex32_menu(tmp=True)
+    pick_menu_item('Calculate Checksum' if is_q1 else 'Calc Checksum')
+    need_keypress('0')
+    enter_bech32(shorter)
+    assert cap_story()[0] == 'CHECK LENGTH'
+    need_keypress('1')  # Even a checksum-valid short card may mean a longer body.
+    assert parse_rendered_codex32(cap_story()[1].split('Codex32:', 1)[1]) == longer.to_string()
     press_cancel()
 
 

@@ -193,10 +193,12 @@ a checksum for exactly the header and payload you entered.
 For CW1, the body of an 18- or 24-word share is the same length as a complete
 12- or 18-word share. With all BIP-93 MS1 sizes supported, the same overlap
 occurs between complete 128-, 160- or 192-bit secrets and longer MS1 bodies.
-If an overlapping input fails validation as a complete share, COLDCARD asks
-you to confirm the intended longer size before adding a checksum.
-Do not confirm if your input already included checksum characters: that would
-turn those characters into wallet data and produce a different wallet.
+At these overlapping lengths COLDCARD asks **before** interpreting the input:
+press OK to validate a complete share, or (1) only if you entered a longer
+header and payload with no checksum. A complete share with an invalid checksum
+is rejected. Do not choose (1) for an existing backup: that would turn its old
+checksum into wallet data and produce a different wallet, even if the old
+checksum happened to validate.
 
 ## Split the Active Wallet
 

@@ -430,8 +430,9 @@ def test_calculate_checksum_damaged_complete_cw_requires_longer_size_confirmatio
     assert title == 'CHECK LENGTH'
     assert 'complete' in story and 'without a checksum' in story
     press_select()  # Validate as a complete share; do not seal damaged data.
-    assert cap_story()[0] == 'FAILED'
-    assert 'invalid checksum' in cap_story()[1]
+    title, story = wait_for_story(cap_story, title='FAILED')
+    assert title == 'FAILED'
+    assert 'invalid checksum' in story
     assert active_secret() == before
     press_select()
     press_cancel()
@@ -446,9 +447,9 @@ def test_calculate_checksum_cw_body_explicit_longer_size(
     pick_menu_item('Calculate Checksum' if is_q1 else 'Calc Checksum')
     need_keypress('0')
     enter_bech32(share.to_string()[:-13])
-    assert cap_story()[0] == 'CHECK LENGTH'
+    assert wait_for_story(cap_story, title='CHECK LENGTH')[0] == 'CHECK LENGTH'
     need_keypress('1')  # Choose the longer checksum-less body explicitly.
-    title, story = cap_story()
+    title, story = wait_for_story(cap_story, title="Share 'S'")
     assert title == "Share 'S'"
     assert parse_rendered_codex32(story.split('Codex32:', 1)[1]) == share.to_string()
     press_cancel()
@@ -464,9 +465,10 @@ def test_calculate_checksum_valid_short_cw_is_also_longer_body(
     pick_menu_item('Calculate Checksum' if is_q1 else 'Calc Checksum')
     need_keypress('0')
     enter_bech32(shorter)
-    assert cap_story()[0] == 'CHECK LENGTH'
+    assert wait_for_story(cap_story, title='CHECK LENGTH')[0] == 'CHECK LENGTH'
     need_keypress('1')  # Even a checksum-valid short card may mean a longer body.
-    assert parse_rendered_codex32(cap_story()[1].split('Codex32:', 1)[1]) == longer.to_string()
+    story = wait_for_story(cap_story, title="Share 'S'")[1]
+    assert parse_rendered_codex32(story.split('Codex32:', 1)[1]) == longer.to_string()
     press_cancel()
 
 
@@ -573,7 +575,7 @@ def test_codex32_scan_requires_checksum(recover, missing_checksum, only_q1,
     assert active_secret() == before
     press_select()
     if recover:
-        assert 'Collected: 0' in cap_story()[1]
+        assert 'Collected: 0' in wait_for_story(cap_story, contains='Collected: 0')[1]
         press_cancel()
 
 
@@ -1415,7 +1417,7 @@ def recover_codex32_shares(goto_shamir_recover, cap_story, need_keypress, is_q1,
         uid = first.uid
         goto_shamir_recover(tmp=tmp, seed_vault=seed_vault)
         time.sleep(.1)
-        _, story = cap_story()
+        _, story = wait_for_story(cap_story, contains='Collected: 0')
         check_recover_story(story, indices=[], is_q1=is_q1)
 
         if way in ('sd', 'vdisk') and fnames is None:
@@ -1463,13 +1465,13 @@ def recover_codex32_shares(goto_shamir_recover, cap_story, need_keypress, is_q1,
 
             if pos < threshold:
                 time.sleep(.1)
-                _, story = cap_story()
+                _, story = wait_for_story(cap_story, contains='Collected: %d' % pos)
                 check_recover_story(story, threshold, uid, pos, first.hrp,
                                     indices=[s[8] for s in shares[:pos]], is_q1=is_q1)
 
         time.sleep(.1)
         if first.hrp in ('cw', 'cx'):
-            title, story = cap_story()
+            title, story = wait_for_story(cap_story, title=first.hrp.upper() + '1 RECOVERY')
             assert title == first.hrp.upper() + '1 RECOVERY'
             assert 'known address' in story
             if acknowledge:
@@ -1477,7 +1479,7 @@ def recover_codex32_shares(goto_shamir_recover, cap_story, need_keypress, is_q1,
             else:
                 return
         if acknowledge:
-            title, story = cap_story()
+            title, story = wait_for_story(cap_story, title='UNVERIFIED')
             assert title == 'UNVERIFIED'
             assert 'known address' in story and 'UNVERIFIED' in story
             press_select()

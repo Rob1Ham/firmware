@@ -394,7 +394,7 @@ def generate_ephemeral_words(goto_eph_seed_menu, pick_menu_item, press_select,
             press_select()  # acknowledge dice-only warning
             time.sleep(0.1)
 
-            num_rolls = 50 if num_words == 12 else 99
+            num_rolls = 50 if num_words == 12 else 100
             for i in range(num_rolls):
                 need_keypress(str((i % 6) + 1))
                 time.sleep(0.01)
@@ -527,7 +527,7 @@ def test_ephemeral_seed_generate(num_words, generate_ephemeral_words, dice,
         restore_main_seed(preserve_settings)
 
 
-@pytest.mark.parametrize("num_words,min_rolls", [(12, 50), (24, 99)])
+@pytest.mark.parametrize("num_words,min_rolls", [(12, 50), (24, 100)])
 def test_ephemeral_dice_security_checks(reset_seed_words, goto_eph_seed_menu,
                                         ephemeral_seed_disabled, pick_menu_item,
                                         cap_story, press_select, press_cancel,

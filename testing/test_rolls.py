@@ -199,7 +199,7 @@ def test_seed_mix_script(run_rolls_script, codex32, bits, method, tmp, expected)
         assert result.stdout.endswith(expected_words + '\n')
 
 
-@pytest.mark.parametrize('bits, minimum', [(128, 50), (256, 99)])
+@pytest.mark.parametrize('bits, minimum', [(128, 50), (256, 100)])
 @pytest.mark.parametrize('uid', ['seed', 'test'])
 def test_codex32_dice_script(run_rolls_script, bits, minimum, uid):
     args = ['--bits', str(bits)] + (['--id', 'TeSt'] if uid == 'test' else [])

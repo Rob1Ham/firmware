@@ -85,6 +85,8 @@ You must enter at least 128 coin flips.'''
 DICE_ONLY_WARNING = '''\
 These dice rolls will be the only source of randomness for your seed. No hardware-generated randomness is mixed in.
 
+The security estimate assumes independent, fair rolls. The face-frequency check cannot remove bias or prove that your rolls are unpredictable.
+
 The hash shown while rolling is SECRET. Anyone who sees or photographs one can recreate the wallet derived from the rolls entered so far and steal its funds.
 
 Keep the screen hidden from people and cameras. If you verify the hash elsewhere, use only a trusted offline device and erase all traces afterward.'''
@@ -445,7 +447,8 @@ async def add_dice_rolls(count, seed, judge_them, nwords=None, enforce=False, nb
 
     # Default to 256 bits for paper wallet private keys (nwords=None).
     sec_bit = nbits or (256 if nwords in (24, None) else 128)
-    threshold = 99 if sec_bit > 128 else 50
+    # 99 * log2(6) < 256 even with perfectly fair dice; 100 exceeds it.
+    threshold = 100 if sec_bit > 128 else 50
 
     counter = {}
     md = sha256(seed)
@@ -520,7 +523,7 @@ async def add_dice_rolls(count, seed, judge_them, nwords=None, enforce=False, nb
 async def new_from_dice(nwords, ephemeral=False):
     # Use lots of (D6) dice rolls to create seed entropy.
     # Note: only 2.585 bits of entropy per roll, so need lots!
-    # 50 => 128bits, 99 => 256bits
+    # With independent fair dice: 50 => >128 bits, 100 => >256 bits.
 
     prompt = '\n\nPress %s to continue, %s to exit.' % (OK, X)
     if await ux_show_story(DICE_ONLY_WARNING + prompt, title='WARNING') == 'x':

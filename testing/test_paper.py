@@ -163,11 +163,11 @@ def test_dice_generate_failure_num_attempts(rolls, dev, cap_menu, pick_menu_item
     time.sleep(0.1)
     title, story = cap_story()
     assert 'Not enough dice rolls!!!' in story
-    assert 'For 256-bit security you need at least 99 rolls' in story
+    assert 'For 256-bit security you need at least 100 rolls' in story
     assert f'Press {OK} to add more dice rolls. {X} to exit' in story
     press_cancel()
 
-@pytest.mark.parametrize('rolls', ['123'*34, "1"*99, "64"*50])
+@pytest.mark.parametrize('rolls', ['123'*34, "1"*100, "64"*50])
 def test_dice_generate_failure_distribution(rolls, dev, cap_menu, pick_menu_item,
                                             goto_home, cap_story, need_keypress,
                                             microsd_path, press_select):
@@ -204,8 +204,8 @@ def test_dice_generate_failure_distribution(rolls, dev, cap_menu, pick_menu_item
 
 @pytest.mark.parametrize('rolls', [
     '123456'*17,
-    "".join([str(random.SystemRandom().randint(1,6)) for _ in range(99)]),
-    "".join([str(random.SystemRandom().randint(1,6)) for _ in range(99)]),
+    "".join([str(random.SystemRandom().randint(1,6)) for _ in range(100)]),
+    "".join([str(random.SystemRandom().randint(1,6)) for _ in range(100)]),
 ])
 @pytest.mark.parametrize('testnet', [True, False])
 def test_dice_generate(rolls, testnet, dev, cap_menu, pick_menu_item, goto_home,
@@ -239,7 +239,7 @@ def test_dice_generate(rolls, testnet, dev, cap_menu, pick_menu_item, goto_home,
 
     press_select()
     time.sleep(0.1)
-    if len(rolls) < 99:
+    if len(rolls) < 100:
         title, story = cap_story()
         assert 'need 50' in story
         press_select()

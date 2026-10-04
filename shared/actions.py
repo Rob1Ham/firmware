@@ -1497,15 +1497,39 @@ async def codex32_calculate_checksum(_1, _2, item):
             title='Calculate Checksum' if version.has_qwerty else 'Calc Checksum',
             input_value=value)
         if not value: break
+        value = value.strip().replace(' ', '')
         try:
-            share = Share.parse(value.strip().replace(' ', ''))
+            share = Share.parse(value)
         except Exception:
             try:
-                share = Share.from_body(value.strip().replace(' ', ''))
+                candidate = Share.from_body(value)
             except Exception as exc:
                 await ux_show_story('Invalid Codex32 header or payload.\n\n%s' % exc,
                                     title='FAILED')
                 continue
+            # Complete CW1 and MS1 lengths can overlap a longer share's body.
+            # Check this only after the candidate body itself has validated:
+            # support for the additional BIP-93 MS1 sizes may be optional.
+            overlaps = {
+                ('cw', 48): ('12-word', '18-word'),
+                ('cw', 61): ('18-word', '24-word'),
+                ('ms', 48): ('128-bit', '192-bit'),
+                ('ms', 54): ('160-bit', '224-bit'),
+                ('ms', 61): ('192-bit', '256-bit'),
+            }
+            sizes = overlaps.get((candidate.hrp, len(value)))
+            if sizes:
+                if not await ux_confirm(
+                        'This input failed validation as a complete %s %s share.'
+                        '\n\nIt could instead be the header and payload of a %s share'
+                        ' WITHOUT a checksum. Only continue if you intended that longer'
+                        ' size and have not entered any checksum characters.' %
+                        (sizes[0], candidate.hrp.upper() + '1', sizes[1]),
+                        title='CHECK LENGTH'):
+                    await ux_show_story('Complete Codex32 share has an invalid checksum.',
+                                        title='FAILED')
+                    continue
+            share = candidate
 
         intro = 'Checksum:\n\n%s\n\nCodex32:\n\n' % share.checksum().upper()
         await show_shamir_share(share.to_string(), share.uid, intro=intro, ephemeral=item.arg)

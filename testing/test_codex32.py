@@ -354,6 +354,44 @@ def test_calculate_checksum_full_share(text, goto_codex32_menu, pick_menu_item,
     assert ('Calculate Checksum' if is_q1 else 'Calc Checksum') in cap_menu()
 
 
+@pytest.mark.parametrize('short_size,long_size', [(16, 24), (20, 28), (24, 32)])
+def test_calculate_checksum_ms_complete_length_requires_confirmation(
+        short_size, long_size, goto_codex32_menu, pick_menu_item, cap_story,
+        press_cancel, press_select, enter_bech32, need_keypress, active_secret, is_q1):
+    before = active_secret()
+    shorter = Share.from_seed(bytes(range(short_size)), 'ms', 'test', SECRET, 0).to_string()
+    damaged = shorter[:-1] + ('Q' if shorter[-1] != 'Q' else 'P')
+    longer = Share.from_seed(bytes(range(long_size)), 'ms', 'test', SECRET, 0).to_string()
+    assert len(damaged) == len(longer[:-13])
+
+    goto_codex32_menu(tmp=True)
+    pick_menu_item('Calculate Checksum' if is_q1 else 'Calc Checksum')
+    need_keypress('0')
+    enter_bech32(damaged)
+    assert cap_story()[0] == 'CHECK LENGTH'
+    assert '%d-bit MS1' % (short_size * 8) in cap_story()[1]
+    press_cancel()  # This is a damaged complete backup, not a longer body.
+    assert cap_story()[0] == 'FAILED'
+    assert active_secret() == before
+    press_select()
+    press_cancel()
+
+
+@pytest.mark.parametrize('size', [24, 28, 32])
+def test_calculate_checksum_longer_ms_body_with_explicit_confirmation(
+        size, goto_codex32_menu, pick_menu_item, cap_story, press_select,
+        press_cancel, enter_bech32, need_keypress, is_q1):
+    share = Share.from_seed(bytes(range(size)), 'ms', 'test', SECRET, 0)
+    goto_codex32_menu(tmp=True)
+    pick_menu_item('Calculate Checksum' if is_q1 else 'Calc Checksum')
+    need_keypress('0')
+    enter_bech32(share.to_string()[:-13])
+    assert cap_story()[0] == 'CHECK LENGTH'
+    press_select()
+    assert parse_rendered_codex32(cap_story()[1].split('Codex32:', 1)[1]) == share.to_string()
+    press_cancel()
+
+
 @pytest.mark.parametrize('tmp', [False, True])
 def test_calculate_checksum_seedless_activation(tmp, unit_test, goto_codex32_menu,
                                                 pick_menu_item, press_select,

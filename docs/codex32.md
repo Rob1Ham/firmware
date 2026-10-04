@@ -190,6 +190,11 @@ Calculating the checksum alone does not activate a wallet.
 
 Calculating a checksum cannot detect existing transcription mistakes: it computes
 a checksum for exactly the header and payload you entered.
+An MS1 header and payload for 192, 224 or 256 bits can be the same length as
+a shorter, complete MS1 share. If a complete-length input fails validation,
+COLDCARD requires explicit confirmation of the intended longer size before
+adding a checksum. Never replace a bad checksum on an existing backup: that
+locks in any errors in the original data.
 
 ## Split the Active Wallet
 

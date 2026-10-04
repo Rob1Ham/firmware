@@ -255,8 +255,11 @@ configured; otherwise, they are stored without confidentiality protection.
 Shamir Recover and Derive Shares share one saved partial set. Opening either
 automatically resumes that set. To start a different set, cancel at the import
 method prompt and confirm **Discard collected shares?** instead of choosing
-**Save & Exit**, then reopen the operation. The saved copy is cleared as soon
-as the threshold is collected, even if wallet recovery subsequently fails.
+**Save & Exit**, then reopen the operation. A saved partial set is retained if
+reconstruction or wallet validation fails. It is cleared after successful
+validation, before a recovered master wallet can change the settings key; a
+later hardware failure during activation can still prevent recovery. Derive
+Shares clears saved progress when you confirm exit.
 
 Recovery begins automatically as soon as the threshold is reached. The
 reconstructed index `s` secret is then activated as the selected master or

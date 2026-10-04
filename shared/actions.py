@@ -2876,12 +2876,24 @@ async def codex32_shamir_recover(menu, label, item):
     dis.fullscreen('Recovering...')
     try:
         recovered = generate_share(shares, SECRET)
+        import seed
+        # Validate the BIP32 root/scalar before discarding a saved partial set.
+        # A valid share checksum alone does not make the recovered CX1 key usable.
+        encoded = seed.SecretStash.encode(codex32=recovered)
+        try:
+            with seed.SensitiveValues(secret=encoded):
+                pass
+        finally:
+            seed.blank_object(encoded)
+        # Clear under the original master settings key before activation can
+        # replace that key (including a previously seedless master wallet).
+        settings.master_set('c32_shares', [])
         await import_codex32_as_secret(recovered.to_string(), ephemeral, 'Recovered Codex32')
     except Exception as exc:
         await ux_show_story('Failed to recover.\n\n%s' % exc, title='FAILED')
 
 async def collect_codex32_shares(title):
-    from codex32 import Share
+    from codex32 import Share, parse_saved_shares
     from glob import dis
 
     if not await ux_confirm('Import shares from one Codex32 set. Their HRP, ID, threshold and '
@@ -2889,7 +2901,15 @@ async def collect_codex32_shares(title):
         return
 
     expected = None
-    shares = {Share.parse(s) for s in settings.master_get('c32_shares', [])}
+    try:
+        shares = set(parse_saved_shares(settings.master_get('c32_shares', [])))
+    except Exception:
+        if not await ux_confirm('Saved Codex32 shares are invalid or incompatible.'
+                                '\n\nDiscard the saved entries and start again?',
+                                title='FAILED'):
+            return
+        settings.master_set('c32_shares', [])
+        shares = set()
     if shares:
         first = next(iter(shares))
         expected = (first.hrp, first.uid, first.threshold, len(first))
@@ -2950,7 +2970,6 @@ async def collect_codex32_shares(title):
         expected = details
         shares.add(share)
 
-    settings.master_set('c32_shares', [])
     return list(shares)
 
 async def codex32_derive_shares(*a):
@@ -2983,6 +3002,7 @@ async def codex32_derive_shares(*a):
             the_ux.push(submenu)
             await submenu.interact()
             if await ux_confirm('Exit and discard collected shares?', title='DISCARD?'):
+                settings.master_set('c32_shares', [])
                 return
     finally:
         shares.clear()

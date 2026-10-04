@@ -349,9 +349,9 @@ def test_calculate_checksum_full_share(text, goto_codex32_menu, pick_menu_item,
     enter_bech32(' '.join(text.lower()[i:i+4] for i in range(0, len(text), 4)))
     time.sleep(.2)
     if text[:3].lower() in ('cw1', 'ms1') and len(text) in (48, 54, 61):
-        assert cap_story()[0] == 'CHECK LENGTH'
+        assert wait_for_story(cap_story, title='CHECK LENGTH')[0] == 'CHECK LENGTH'
         press_select()  # Validate the complete input, not a longer body.
-    title, story = cap_story()
+    title, story = wait_for_story(cap_story, title="Share '%s'" % text[8].upper())
     assert title == "Share '%s'" % text[8].upper()
     assert 'Checksum:\n\n' + text[-checksum_len:].upper() in story
     assert parse_rendered_codex32(story.split('Codex32:', 1)[1]) == text.upper()
@@ -375,10 +375,11 @@ def test_calculate_checksum_ms_complete_length_requires_confirmation(
     pick_menu_item('Calculate Checksum' if is_q1 else 'Calc Checksum')
     need_keypress('0')
     enter_bech32(damaged)
-    assert cap_story()[0] == 'CHECK LENGTH'
-    assert '%d-bit MS1' % (short_size * 8) in cap_story()[1]
+    title, story = wait_for_story(cap_story, title='CHECK LENGTH')
+    assert title == 'CHECK LENGTH'
+    assert '%d-bit MS1' % (short_size * 8) in story
     press_select()  # Validate as a complete backup, not a longer body.
-    assert cap_story()[0] == 'FAILED'
+    assert wait_for_story(cap_story, title='FAILED')[0] == 'FAILED'
     assert active_secret() == before
     press_select()
     press_cancel()
@@ -393,9 +394,10 @@ def test_calculate_checksum_longer_ms_body_with_explicit_confirmation(
     pick_menu_item('Calculate Checksum' if is_q1 else 'Calc Checksum')
     need_keypress('0')
     enter_bech32(share.to_string()[:-13])
-    assert cap_story()[0] == 'CHECK LENGTH'
+    assert wait_for_story(cap_story, title='CHECK LENGTH')[0] == 'CHECK LENGTH'
     need_keypress('1')  # Choose the longer checksum-less body explicitly.
-    assert parse_rendered_codex32(cap_story()[1].split('Codex32:', 1)[1]) == share.to_string()
+    story = wait_for_story(cap_story, title="Share 'S'")[1]
+    assert parse_rendered_codex32(story.split('Codex32:', 1)[1]) == share.to_string()
     press_cancel()
 
 
@@ -409,9 +411,10 @@ def test_calculate_checksum_valid_short_ms_is_also_longer_body(
     pick_menu_item('Calculate Checksum' if is_q1 else 'Calc Checksum')
     need_keypress('0')
     enter_bech32(shorter)
-    assert cap_story()[0] == 'CHECK LENGTH'
+    assert wait_for_story(cap_story, title='CHECK LENGTH')[0] == 'CHECK LENGTH'
     need_keypress('1')
-    assert parse_rendered_codex32(cap_story()[1].split('Codex32:', 1)[1]) == longer.to_string()
+    story = wait_for_story(cap_story, title="Share 'S'")[1]
+    assert parse_rendered_codex32(story.split('Codex32:', 1)[1]) == longer.to_string()
     press_cancel()
 
 

@@ -57,6 +57,9 @@ def run_logged(cmd, *, cwd, env, log_path, timeout):
             timed_out = True
             stop_group(proc)
             code = proc.returncode
+        except BaseException:
+            stop_group(proc)
+            raise
     return {'command': cmd, 'exit_code': code, 'timed_out': timed_out,
             'seconds': round(time.monotonic() - started, 3),
             'log': str(log_path)}
@@ -291,6 +294,10 @@ def main():
             report['retry'] = attempt(args, env, args.artifacts, 'retry',
                                       args.artifacts / 'retry-storage', expected_count)
         report['qualified'] = bool(report['first_attempt']['ok'])
+    except KeyboardInterrupt:
+        report['qualified'] = False
+        report['interrupted'] = True
+        report['harness_error'] = 'KeyboardInterrupt: run interrupted'
     except Exception as exc:
         report['qualified'] = False
         report['harness_error'] = f'{type(exc).__name__}: {exc}'
@@ -298,7 +305,7 @@ def main():
     report_path.write_text(json.dumps(report, indent=2) + '\n')
     print(json.dumps({'qualified': report['qualified'], 'manifest': str(report_path),
                       'error': report.get('harness_error')}, sort_keys=True))
-    return 0 if report['qualified'] else 1
+    return 0 if report['qualified'] else 130 if report.get('interrupted') else 1
 
 
 if __name__ == '__main__':

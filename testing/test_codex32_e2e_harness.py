@@ -36,6 +36,38 @@ def test_timeout_kills_owned_process(tmp_path):
         os.kill(pid, 0)
 
 
+def test_interrupt_kills_owned_process(tmp_path, monkeypatch):
+    real_popen = harness.subprocess.Popen
+    child = {}
+
+    class InterruptOnce:
+        def __init__(self, proc):
+            self.proc = proc
+            self.pid = proc.pid
+            self.interrupted = False
+
+        def wait(self, *args, **kwargs):
+            if not self.interrupted:
+                self.interrupted = True
+                raise KeyboardInterrupt
+            return self.proc.wait(*args, **kwargs)
+
+        def poll(self):
+            return self.proc.poll()
+
+    def start_child(*args, **kwargs):
+        child['proc'] = InterruptOnce(real_popen(*args, **kwargs))
+        return child['proc']
+
+    monkeypatch.setattr(harness.subprocess, 'Popen', start_child)
+    with pytest.raises(KeyboardInterrupt):
+        run_logged([sys.executable, '-c', 'import time; time.sleep(30)'],
+                   cwd=tmp_path, env=os.environ.copy(),
+                   log_path=tmp_path / 'child.log', timeout=5)
+    with pytest.raises(ProcessLookupError):
+        os.kill(child['proc'].pid, 0)
+
+
 def test_missing_empty_and_skipped_junit_are_visible(tmp_path):
     with pytest.raises(ValueError, match='missing'):
         parse_junit(tmp_path / 'missing.xml')
@@ -106,3 +138,28 @@ def test_passing_retry_cannot_erase_first_failure(tmp_path, monkeypatch, capsys)
     assert report['first_attempt']['ok'] is False
     assert report['retry']['ok'] is True
     assert '"qualified": false' in capsys.readouterr().out
+
+
+def test_interrupt_writes_failed_manifest(tmp_path, monkeypatch):
+    binary = tmp_path / 'unix/coldcard-mpy'
+    binary.parent.mkdir()
+    binary.write_bytes(b'dummy simulator')
+    monkeypatch.setattr(harness.subprocess, 'check_output',
+                        lambda command, text: 'a' * 40 + '\n' if 'rev-parse' in command else '')
+    monkeypatch.setattr(harness, 'collect', lambda *a: {
+        'ok': True, 'selected_count': 1,
+        'selected_ids': ['test_dummy.py::test_value']})
+
+    def interrupted_attempt(*args):
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(harness, 'attempt', interrupted_attempt)
+    output = tmp_path / 'artifacts'
+    monkeypatch.setattr(sys, 'argv', ['harness', '--root', str(tmp_path),
+                        '--model', 'mk4', '--target', 'test_dummy.py',
+                        '--artifacts', str(output)])
+    assert harness.main() == 130
+    report = __import__('json').loads((output / 'manifest.json').read_text())
+    assert report['qualified'] is False
+    assert report['interrupted'] is True
+    assert report['harness_error'].startswith('KeyboardInterrupt:')

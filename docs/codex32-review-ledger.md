@@ -21,6 +21,7 @@ inputs, not a claim that the full release matrix has passed.
 ## Findings and limits
 
 - **Fixed:** The no-padding 160-bit constructor accepted an impossible padding value (`fbe72467`).
+- **Fixed in tests:** The share-export fixture checked for a detached `.sig` file after its verifier had already validated and deleted that file. The isolated integration and offline-signing case now passes; the affected full-matrix run must be repeated on the corrected fixture.
 - **Fixed by integrated PRs:** CW1/MS1 checksum length ambiguity (#62/#64), blank-master pending-share storage (#65), saved-share validation and recovery ordering (#66/#63), 256-bit dice-only threshold (#67), unrelated export signatures (#68), and CW1/CX1 recovery explanation (#69).
 - **Intentional:** Recovery remains unverified until the user compares a known address with the original network, path and address type. A checksum and short fingerprint do not authenticate the original wallet.
 - **Hardware limit:** The simulator does not establish secure-element behavior, flash erasure atomicity, power-loss recovery or physical RNG quality. The documented interval between clearing saved progress and completing activation still exists.

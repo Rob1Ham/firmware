@@ -737,7 +737,8 @@ def shamir_split_settings(enter_number, cap_screen, cap_story, press_select):
 
 @pytest.fixture
 def export_shares(cap_story, press_select, cap_menu, pick_menu_item, need_keypress,
-                  load_export, press_cancel, microsd_path, virtdisk_path, garbage_collector):
+                  load_export, press_cancel, microsd_path, virtdisk_path,
+                  garbage_collector):
     def doit(way, num_shares, threshold, hrp=None, sec_length=None):
         title, story = cap_story()
         assert title == 'WARNING'
@@ -776,10 +777,9 @@ def export_shares(cap_story, press_select, cap_menu, pick_menu_item, need_keypre
                 value, fname = value
                 path_f = microsd_path if way == 'sd' else virtdisk_path
                 garbage_collector.append(path_f(fname))
-                sig_path = path_f(fname.rsplit('.', 1)[0] + '.sig')
-                assert os.path.exists(sig_path)
+                # load_export already verifies the detached signature and its
+                # verification fixture removes the .sig file afterward.
                 assert 'Signature:' in cap_story()[1]
-                garbage_collector.append(sig_path)
                 fnames.append(fname)
             assert value == share.to_string()
             shares.append(share)

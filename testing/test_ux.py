@@ -164,7 +164,18 @@ def test_import_seed(goto_home, pick_menu_item, cap_story, need_keypress, unit_t
     assert f'Press {KEY_QR if is_q1 else "(3)"} to show QR code' in istory
     if not is_headless:
         need_keypress(KEY_QR if is_q1 else '3')
-        qr = cap_screen_qr().decode('ascii')
+        # The Q1 display can still be drawing the QR when the keypress
+        # returns. Keep decoding until a frame is ready, then check its
+        # exact xpub; a missing or unreadable QR still fails at the deadline.
+        deadline = time.monotonic() + 3
+        while True:
+            try:
+                qr = cap_screen_qr().decode('ascii')
+                break
+            except RuntimeError as exc:
+                if str(exc) != 'qr code not found' or time.monotonic() >= deadline:
+                    raise
+                time.sleep(.1)
         assert qr == v['xpub']
 
     assert v['mnemonic'] == seed_words

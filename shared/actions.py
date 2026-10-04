@@ -2925,6 +2925,15 @@ async def codex32_shamir_recover(menu, label, item):
                 pass
         finally:
             seed.blank_object(encoded)
+        # A valid per-share checksum and matching headers do not authenticate
+        # the set. In particular, one replaced share can select another wallet.
+        if not await ux_confirm(
+                'These shares reconstruct a checksummed wallet, but COLDCARD'
+                ' cannot prove it is your ORIGINAL wallet. Compare a known address'
+                ' using its original network, address type and derivation path.'
+                '\n\nPress OK to activate this wallet as UNVERIFIED, or cancel.',
+                title='UNVERIFIED'):
+            return
         # Clear under the original master settings key before activation can
         # replace that key (including a previously seedless master wallet).
         settings.master_set('c32_shares', [])

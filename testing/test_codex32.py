@@ -1430,14 +1430,12 @@ def test_shamir_recover_seedless_saved_shares(tmp, unit_test, import_codex32_ui,
         pick_menu_item(fname)
         press_cancel()
         story = cap_story()[1]
-        assert 'Press (1) to Save & Exit.' in story
-        assert ('WARNING: Without a master wallet, saved shares will not be'
-                ' protected by encryption.') in story
-        need_keypress('1')
-        time.sleep(.1)
-        assert master_settings_get('c32_shares') == [share.to_string()]
+        assert 'Save & Exit' not in story
+        assert 'they cannot be saved securely' in story
+        press_cancel()  # Keep the share in RAM while continuing collection.
+        check_recover_story(cap_story()[1], 2, 'name', 1, 'ms')
 
-        # Reload the seedless settings from flash, including when a temporary seed is active.
+        # Neither a blank master nor a temporary wallet can protect master settings.
         reload_saved = ('from nvstore import SettingsObject; '
                         'saved = SettingsObject(bytes(32)); saved.load(); '
                         'RV.write(repr(saved.get("c32_shares"))); ')
@@ -1445,18 +1443,13 @@ def test_shamir_recover_seedless_saved_shares(tmp, unit_test, import_codex32_ui,
             reload_saved += 'SettingsObject.master_sv_data["c32_shares"] = saved.get("c32_shares")'
         else:
             reload_saved += 'settings.load()'
-        assert eval(sim_exec(reload_saved)) == [share.to_string()]
+        assert not eval(sim_exec(reload_saved))
 
-        goto_shamir_recover(tmp=tmp, tmp_active=tmp)
-        check_recover_story(cap_story()[1], 2, 'name', 1, 'ms')
         press_cancel()
-        press_cancel()  # Keep collecting.
-        check_recover_story(cap_story()[1], 2, 'name', 1, 'ms')
-        press_cancel()
-        press_select()  # Discard the saved collection.
+        press_select()  # Discard the in-memory collection.
         time.sleep(.1)
-        assert master_settings_get('c32_shares') == []
-        assert sim_exec(reload_saved) == '[]'
+        assert not master_settings_get('c32_shares')
+        assert not eval(sim_exec(reload_saved))
     finally:
         reset_seed_words()
 

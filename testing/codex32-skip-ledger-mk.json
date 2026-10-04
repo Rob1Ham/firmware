@@ -1,0 +1,122 @@
+{
+  "test_codex32::test_bip32_compat_shamir_split[words24-m_n3-qr-]": {
+    "disposition": "Q1 nonheadless QR capture and decode lane covers display output",
+    "reason": "headless mode: QR tests disabled"
+  },
+  "test_codex32::test_bip32_compat_shamir_split[xprv-m_n6-qr-]": {
+    "disposition": "Q1 nonheadless QR capture and decode lane covers display output",
+    "reason": "headless mode: QR tests disabled"
+  },
+  "test_codex32::test_calculate_checksum_import[CW12TESTAQQQSYQCYQ5RQWZQFPG9SCRGWPLAKQFV57KA8ZVY-qr]": {
+    "disposition": "Q1 nonheadless Codex32 lane covers this Q1-only or long-input route",
+    "reason": "requires Q scanner"
+  },
+  "test_codex32::test_calculate_checksum_import[CX100C8VSM32ZXFGUHPCHTLUPZRY9X8GF2TVDW0S3JN54KHCE6MUA7LQPZYGSFJD6AN074RXVCEMLH8WU3TK925ACDEFGHJKLMNPQRSTUVWXY06GPUHWUSDF58Y65T8-qr]": {
+    "disposition": "Q1 nonheadless Codex32 lane covers this Q1-only or long-input route",
+    "reason": "requires Q scanner"
+  },
+  "test_codex32::test_calculate_checksum_scan_case[False-lower]": {
+    "disposition": "Q1 nonheadless Codex32 lane covers this Q1-only or long-input route",
+    "reason": "requires Q scanner"
+  },
+  "test_codex32::test_calculate_checksum_scan_case[False-mixed]": {
+    "disposition": "Q1 nonheadless Codex32 lane covers this Q1-only or long-input route",
+    "reason": "requires Q scanner"
+  },
+  "test_codex32::test_calculate_checksum_scan_case[False-upper]": {
+    "disposition": "Q1 nonheadless Codex32 lane covers this Q1-only or long-input route",
+    "reason": "requires Q scanner"
+  },
+  "test_codex32::test_calculate_checksum_scan_case[True-lower]": {
+    "disposition": "Q1 nonheadless Codex32 lane covers this Q1-only or long-input route",
+    "reason": "requires Q scanner"
+  },
+  "test_codex32::test_calculate_checksum_scan_case[True-mixed]": {
+    "disposition": "Q1 nonheadless Codex32 lane covers this Q1-only or long-input route",
+    "reason": "requires Q scanner"
+  },
+  "test_codex32::test_calculate_checksum_scan_case[True-upper]": {
+    "disposition": "Q1 nonheadless Codex32 lane covers this Q1-only or long-input route",
+    "reason": "requires Q scanner"
+  },
+  "test_codex32::test_codex32_scan_requires_checksum[False-False]": {
+    "disposition": "Q1 nonheadless Codex32 lane covers this Q1-only or long-input route",
+    "reason": "Q only"
+  },
+  "test_codex32::test_codex32_scan_requires_checksum[False-True]": {
+    "disposition": "Q1 nonheadless Codex32 lane covers this Q1-only or long-input route",
+    "reason": "Q only"
+  },
+  "test_codex32::test_codex32_scan_requires_checksum[True-False]": {
+    "disposition": "Q1 nonheadless Codex32 lane covers this Q1-only or long-input route",
+    "reason": "Q only"
+  },
+  "test_codex32::test_codex32_scan_requires_checksum[True-True]": {
+    "disposition": "Q1 nonheadless Codex32 lane covers this Q1-only or long-input route",
+    "reason": "Q only"
+  },
+  "test_codex32::test_codex32_shamir_split[ms-32-m_n5-qr-0]": {
+    "disposition": "Q1 nonheadless QR capture and decode lane covers display output",
+    "reason": "headless mode: QR tests disabled"
+  },
+  "test_codex32::test_codex32_shamir_split[ms-64-m_n8-qr-0]": {
+    "disposition": "Q1 nonheadless QR capture and decode lane covers display output",
+    "reason": "headless mode: QR tests disabled"
+  },
+  "test_codex32::test_import_codex32[input-True-CX100C8VSM32ZXFGUHPCHTLUPZRY9X8GF2TVDW0S3JN54KHCE6MUA7LQPZYGSFJD6AN074RXVCEMLH8WU3TK925ACDEFGHJKLMNPQRSTUVWXY06GPUHWUSDF58Y65T8]": {
+    "disposition": "Q1 nonheadless Codex32 lane covers this Q1-only or long-input route",
+    "reason": "long manual entry covered on Q"
+  },
+  "test_codex32::test_import_codex32[input-True-ms10testsqqqsyqcyq5rqwzqfpg9scrgwpugpzysnzs23v9ccrydpk8qarc0jqgfzyvjz2f389q5j52ev95hz7vp3xgengdfkxuurjw3m8s7nu0ax3uvrcss9ddwnst]": {
+    "disposition": "Q1 nonheadless Codex32 lane covers this Q1-only or long-input route",
+    "reason": "long manual entry covered on Q"
+  },
+  "test_codex32::test_import_codex32[qr-False-CW12TESTSQQQSYQCYQ5RQWZQFPG9SCRGWPA3HA0NYPT0468L]": {
+    "disposition": "Q1 nonheadless Codex32 lane covers this Q1-only or long-input route",
+    "reason": "mk4 QR not supported"
+  },
+  "test_codex32::test_import_codex32[qr-False-CW12TESTSQQQSYQCYQ5RQWZQFPG9SCRGWPUGPZYSNZS23V9CCRYDPK8QARC03HC0TSDSAFY5ZR]": {
+    "disposition": "Q1 nonheadless Codex32 lane covers this Q1-only or long-input route",
+    "reason": "mk4 QR not supported"
+  },
+  "test_codex32::test_import_codex32[qr-False-CW12TESTSQQQSYQCYQ5RQWZQFPG9SCRGWPUGPZYSNZS23V9E97M4WG0QA8MXD]": {
+    "disposition": "Q1 nonheadless Codex32 lane covers this Q1-only or long-input route",
+    "reason": "mk4 QR not supported"
+  },
+  "test_codex32::test_import_codex32[qr-False-CX100C8VSM32ZXFGUHPCHTLUPZRY9X8GF2TVDW0S3JN54KHCE6MUA7LQPZYGSFJD6AN074RXVCEMLH8WU3TK925ACDEFGHJKLMNPQRSTUVWXY06GPUHWUSDF58Y65T8]": {
+    "disposition": "Q1 nonheadless Codex32 lane covers this Q1-only or long-input route",
+    "reason": "mk4 QR not supported"
+  },
+  "test_codex32::test_import_codex32[qr-False-ms10leetsllhdmn9m42vcsamx24zrxgs3qrl7ahwvhw4fnzrhve25gvezzyq9dsuypw2ragmel]": {
+    "disposition": "Q1 nonheadless Codex32 lane covers this Q1-only or long-input route",
+    "reason": "mk4 QR not supported"
+  },
+  "test_codex32::test_import_codex32[qr-False-ms10testsqqqsyqcyq5rqwzqfpg9scrgwpugpzysnzs23v9ccrydpk8qarc0jqgfzyvjz2f389q5j52ev95hz7vp3xgengdfkxuurjw3m8s7nu0ax3uvrcss9ddwnst]": {
+    "disposition": "Q1 nonheadless Codex32 lane covers this Q1-only or long-input route",
+    "reason": "mk4 QR not supported"
+  },
+  "test_codex32::test_import_codex32[qr-False-ms10testsxxxxxxxxxxxxxxxxxxxxxxxxxx4nzvca9cmczlw]": {
+    "disposition": "Q1 nonheadless Codex32 lane covers this Q1-only or long-input route",
+    "reason": "mk4 QR not supported"
+  },
+  "test_codex32::test_q1_codex32_four_column_spacing": {
+    "disposition": "Q1 nonheadless Codex32 lane covers this Q1-only or long-input route",
+    "reason": "Q only"
+  },
+  "test_codex32::test_shamir_recover_import_ways[cx-64-input]": {
+    "disposition": "Q1 nonheadless Codex32 lane covers this Q1-only or long-input route",
+    "reason": "long manual entry covered on Q"
+  },
+  "test_codex32::test_shamir_recover_import_ways[cx-64-qr]": {
+    "disposition": "Q1 nonheadless Codex32 lane covers this Q1-only or long-input route",
+    "reason": "mk4 QR not supported"
+  },
+  "test_codex32::test_shamir_recover_import_ways[ms-16-qr]": {
+    "disposition": "Q1 nonheadless Codex32 lane covers this Q1-only or long-input route",
+    "reason": "mk4 QR not supported"
+  },
+  "test_codex32::test_shamir_recover_import_ways[ms-64-input]": {
+    "disposition": "Q1 nonheadless Codex32 lane covers this Q1-only or long-input route",
+    "reason": "long manual entry covered on Q"
+  }
+}

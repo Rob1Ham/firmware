@@ -259,8 +259,11 @@ method prompt and confirm **Discard collected shares?** instead of choosing
 as the threshold is collected, even if wallet recovery subsequently fails.
 
 Recovery begins automatically as soon as the threshold is reached. The
-reconstructed index `s` secret is then activated as the selected master or
-temporary wallet. CW1 recovery restores a words wallet: use **View Secret** to
+reconstructed index `s` secret is checksummed, then COLDCARD warns that it
+cannot verify the original wallet identity. Activation requires an explicit
+**UNVERIFIED** acknowledgement; cancel leaves the active wallet unchanged.
+Compare against an independently recorded address before relying on the
+recovered wallet. CW1 recovery restores a words wallet: use **View Secret** to
 check the words, then apply your original BIP-39 passphrase separately if needed.
 CX1 recovery restores extended keys directly. MS1 recovery restores raw
 master-seed bytes; View Secret displays hex and a standalone `MS10SEEDS...`

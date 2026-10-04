@@ -13,12 +13,19 @@ from bip32 import PrivateKey
 from ckcc_protocol.constants import *
 
 
+@pytest.fixture
+def restore_chain(settings_get, settings_set):
+    original = settings_get('chain')
+    yield
+    settings_set('chain', original)
+
+
 @pytest.mark.parametrize('mode', ["classic", 'segwit'])
 @pytest.mark.parametrize('pdf', [False, True])
 @pytest.mark.parametrize('netcode', ["XTN", "BTC"])
 def test_generate(mode, pdf, netcode, dev, cap_menu, pick_menu_item, goto_home, cap_story,
                   need_keypress, microsd_path, verify_detached_signature_file, settings_set,
-                  press_select, src_root_dir):
+                  press_select, src_root_dir, restore_chain):
     # test UX and operation of the 'bitcoin core' wallet export
     mx = "Don't make PDF"
 
@@ -202,15 +209,20 @@ def test_dice_generate_failure_distribution(rolls, dev, cap_menu, pick_menu_item
     assert 'Some numbers occurred more than 30% of the time' in story
     # exit
 
+def deterministic_rolls(seed):
+    rng = random.Random(seed)
+    return ''.join(str(rng.randint(1, 6)) for _ in range(100))
+
+
 @pytest.mark.parametrize('rolls', [
     '123456'*17,
-    "".join([str(random.SystemRandom().randint(1,6)) for _ in range(100)]),
-    "".join([str(random.SystemRandom().randint(1,6)) for _ in range(100)]),
+    deterministic_rolls(0xC032A),
+    deterministic_rolls(0xC032B),
 ])
 @pytest.mark.parametrize('testnet', [True, False])
 def test_dice_generate(rolls, testnet, dev, cap_menu, pick_menu_item, goto_home,
                        cap_story, need_keypress, microsd_path, press_select,
-                       verify_detached_signature_file, settings_set):
+                       verify_detached_signature_file, settings_set, restore_chain):
     # verify the math for dice rolling method
 
     settings_set("chain", "XTN" if testnet else "BTC")

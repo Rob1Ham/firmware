@@ -57,6 +57,10 @@ def test_show_addr_displayed(dev, need_keypress, addr_vs_path, path, addr_fmt,
     time.sleep(0.1)
 
     verify_qr_address(addr_fmt, addr)
+    # Leave the address/QR request before the next test navigates the menu.
+    # A single cancel returns from the QR view to the address request.
+    press_cancel()
+    time.sleep(0.1)
 
 @pytest.mark.bitcoind
 def test_addr_vs_bitcoind(use_regtest, press_select, dev, bitcoind_d_sim_sign):

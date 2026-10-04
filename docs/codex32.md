@@ -191,8 +191,10 @@ Calculating the checksum alone does not activate a wallet.
 Calculating a checksum cannot detect existing transcription mistakes: it computes
 a checksum for exactly the header and payload you entered.
 For CW1, the body of an 18- or 24-word share is the same length as a complete
-12- or 18-word share. If a CW1 input of that length fails its existing checksum,
-COLDCARD asks you to confirm the intended longer size before adding a checksum.
+12- or 18-word share. With all BIP-93 MS1 sizes supported, the same overlap
+occurs between complete 128-, 160- or 192-bit secrets and longer MS1 bodies.
+If an overlapping input fails validation as a complete share, COLDCARD asks
+you to confirm the intended longer size before adding a checksum.
 Do not confirm if your input already included checksum characters: that would
 turn those characters into wallet data and produce a different wallet.
 

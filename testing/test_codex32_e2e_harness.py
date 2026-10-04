@@ -8,6 +8,7 @@ from types import SimpleNamespace
 
 import pytest
 
+import codex32_e2e_harness as harness
 from codex32_e2e_harness import (collect, junit_id, parse_junit, run_logged,
                                  skipped_are_disposed)
 
@@ -81,3 +82,27 @@ def test_junit_ids_and_skip_dispositions_are_exact():
     assert not skipped_are_disposed(skips, {
         'test_codex32::test_q1_only': {'reason': 'another reason',
                                        'disposition': 'covered elsewhere'}}, [])
+
+
+def test_passing_retry_cannot_erase_first_failure(tmp_path, monkeypatch, capsys):
+    binary = tmp_path / 'unix/coldcard-mpy'
+    binary.parent.mkdir()
+    binary.write_bytes(b'dummy simulator')
+    monkeypatch.setattr(harness.subprocess, 'check_output',
+                        lambda command, text: 'a' * 40 + '\n' if 'rev-parse' in command else '')
+    monkeypatch.setattr(harness, 'collect', lambda *a: {
+        'ok': True, 'selected_count': 1,
+        'selected_ids': ['test_dummy.py::test_value']})
+    attempts = iter(({'ok': False, 'exit_code': 1, 'counts': {'failed': 1}},
+                     {'ok': True, 'exit_code': 0, 'counts': {'passed': 1}}))
+    monkeypatch.setattr(harness, 'attempt', lambda *a: next(attempts))
+    output = tmp_path / 'artifacts'
+    monkeypatch.setattr(sys, 'argv', ['harness', '--root', str(tmp_path),
+                        '--model', 'mk4', '--target', 'test_dummy.py',
+                        '--artifacts', str(output), '--retry'])
+    assert harness.main() == 1
+    report = __import__('json').loads((output / 'manifest.json').read_text())
+    assert report['qualified'] is False
+    assert report['first_attempt']['ok'] is False
+    assert report['retry']['ok'] is True
+    assert '"qualified": false' in capsys.readouterr().out

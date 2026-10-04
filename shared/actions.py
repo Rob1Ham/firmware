@@ -2876,6 +2876,15 @@ async def codex32_shamir_recover(menu, label, item):
     dis.fullscreen('Recovering...')
     try:
         recovered = generate_share(shares, SECRET)
+        # A valid per-share checksum and matching headers do not authenticate
+        # the set. In particular, one replaced share can select another wallet.
+        if not await ux_confirm(
+                'These shares reconstruct a checksummed wallet, but COLDCARD'
+                ' cannot prove it is your ORIGINAL wallet. Compare a known address'
+                ' using its original network, address type and derivation path.'
+                '\n\nPress OK to activate this wallet as UNVERIFIED, or cancel.',
+                title='UNVERIFIED'):
+            return
         await import_codex32_as_secret(recovered.to_string(), ephemeral, 'Recovered Codex32')
     except Exception as exc:
         await ux_show_story('Failed to recover.\n\n%s' % exc, title='FAILED')

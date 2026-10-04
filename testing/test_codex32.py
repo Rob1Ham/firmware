@@ -1256,10 +1256,12 @@ def test_codex32_shamir_split(hrp, sec_len, m_n, way, initial_threshold, set_enc
 
 @pytest.fixture
 def recover_codex32_shares(goto_shamir_recover, cap_story, need_keypress, is_q1, press_nfc,
-                           nfc_write_text, scan_a_qr, enter_bech32, microsd_path,
-                           virtdisk_path, garbage_collector, pick_menu_item, cap_screen):
+                            nfc_write_text, scan_a_qr, enter_bech32, microsd_path,
+                            virtdisk_path, garbage_collector, pick_menu_item, cap_screen,
+                            press_select):
 
-    def doit(shares, way, tmp=False, seed_vault=False, fnames=None, spaced=False):
+    def doit(shares, way, tmp=False, seed_vault=False, fnames=None, spaced=False,
+             acknowledge=True):
         def format_share(value):
             return ' '.join(value[i:i+4] for i in range(0, len(value), 4)) if spaced else value
 
@@ -1320,7 +1322,35 @@ def recover_codex32_shares(goto_shamir_recover, cap_story, need_keypress, is_q1,
                 check_recover_story(story, threshold, uid, pos, first.hrp,
                                     indices=[s[8] for s in shares[:pos]], is_q1=is_q1)
 
+        if acknowledge:
+            time.sleep(.1)
+            title, story = cap_story()
+            assert title == 'UNVERIFIED'
+            assert 'known address' in story and 'UNVERIFIED' in story
+            press_select()
+
     return doit
+
+
+def test_recovered_wallet_requires_unverified_acknowledgement(
+        reset_seed_words, recover_codex32_shares, cap_story, press_cancel,
+        active_secret, generate_shares_from_secret):
+    reset_seed_words()
+    secret, shares, _ = generate_shares_from_secret(3, 2, slen=16, uid='cash')
+    first, second = (Share.parse(value) for value in shares[:2])
+    attacker_wallet = Share.from_seed(bytes(range(16)), 'ms', secret.uid, SECRET, 2)
+    forged = generate_share([first, attacker_wallet], second.index)
+    assert generate_share([first, forged], SECRET) == attacker_wallet
+    assert attacker_wallet != secret
+    before = active_secret()
+    recover_codex32_shares([first.to_string(), forged.to_string()], 'sd', tmp=True,
+                           acknowledge=False)
+    title, story = cap_story()
+    assert title == 'UNVERIFIED'
+    assert 'cannot prove it is your ORIGINAL wallet' in story
+    press_cancel()
+    assert active_secret() == before
+    reset_seed_words()
 
 
 @pytest.mark.parametrize('sec_type', ['mnemonic', 'xprv', 'ms16', 'ms32', 'ms64'])
@@ -1544,6 +1574,8 @@ def test_shamir_recover_failures(reset_seed_words, goto_shamir_recover, generate
     time.sleep(.1)
     nfc_write_text(shares[1])
     time.sleep(.3)
+    assert cap_story()[0] == 'UNVERIFIED'
+    press_select()
     confirm_tmp_seed()
     assert active_secret() == native_encoding(secret.to_string()).hex()
     assert master_settings_get('c32_shares') == []

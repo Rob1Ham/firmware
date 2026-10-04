@@ -130,6 +130,9 @@ def convertbits(data, frombits, tobits, pad=True, pad_val=0):
         result.append(((accumulator << pad_len) | pad_val) & max_value)
     else:
         assert bits < frombits  #, "invalid padding"
+        if pad:
+            # An exact 5-bit boundary has no padding symbol to carry a value.
+            assert pad_val == 0, "invalid padding"
 
     return result
 

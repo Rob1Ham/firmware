@@ -907,19 +907,25 @@ Q1 specials:
     log_base_dir = "/tmp"
 
     if segregate:
-        os.makedirs("/tmp/cc-simulators", exist_ok=True)
-        os.chdir("/tmp/cc-simulators")
-        # our new work /tmp/cc-simulators/<PID>
-        os.mkdir(str(pid))
-        os.chdir(str(pid))
+        # A release harness can own this directory and reuse it after a
+        # deliberate simulator restart to test persistent settings.
+        owned_workdir = os.environ.get('CKCC_SIM_WORKDIR')
+        if owned_workdir:
+            os.makedirs(owned_workdir, exist_ok=True)
+            os.chdir(owned_workdir)
+        else:
+            os.makedirs("/tmp/cc-simulators", exist_ok=True)
+            os.chdir("/tmp/cc-simulators")
+            os.mkdir(str(pid))
+            os.chdir(str(pid))
         log_base_dir = os.getcwd()
-        os.mkdir("MicroSD")
-        os.mkdir("settings")
-        os.mkdir("VirtDisk")
-        os.mkdir("debug")
+        for name in ('MicroSD', 'settings', 'VirtDisk', 'debug'):
+            os.makedirs(name, exist_ok=True)
         # needed for VirtDisk test
-        shutil.copy(os.path.join(cwd, "work", "VirtDisk", "README.md"),
-                    os.path.join(os.getcwd(), "VirtDisk", "README.md"))
+        vdisk_readme = os.path.join(os.getcwd(), 'VirtDisk', 'README.md')
+        if not os.path.exists(vdisk_readme):
+            shutil.copy(os.path.join(cwd, "work", "VirtDisk", "README.md"),
+                        vdisk_readme)
     else:
         os.chdir('./work')
 

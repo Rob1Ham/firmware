@@ -12,6 +12,8 @@
 
 *.log
 ENV
+.venv*/
+/artifacts/codex32/
 *.swp
 
 build/

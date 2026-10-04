@@ -27,10 +27,13 @@ random.seed(42)
 # needs to be run from /testing directory
 os.environ["SRC_ROOT"] = os.path.join(os.getcwd().rsplit("/", 1)[0])
 if sys.platform == 'darwin':
-    # BUGFIX: my ARM-based MacOS system uses rosetta to run Python in x86 mode
-    # and so I needed this?
-    # - this assumes "brew install secp256k1"
-    os.environ['PYSECP_SO'] = '/usr/local/lib/libsecp256k1.dylib'
+    # Respect a caller-pinned library and support both Homebrew prefixes.
+    if 'PYSECP_SO' not in os.environ:
+        for candidate in ('/opt/homebrew/lib/libsecp256k1.dylib',
+                          '/usr/local/lib/libsecp256k1.dylib'):
+            if os.path.exists(candidate):
+                os.environ['PYSECP_SO'] = candidate
+                break
 
 def pytest_addoption(parser):
     parser.addoption("--dev", action="store_true",

@@ -344,6 +344,9 @@ def test_calculate_checksum_full_share(text, goto_codex32_menu, pick_menu_item,
     checksum_len = 15 if len(text) == 127 else 13
     enter_bech32(' '.join(text.lower()[i:i+4] for i in range(0, len(text), 4)))
     time.sleep(.2)
+    if text[:3].lower() in ('cw1', 'ms1') and len(text) in (48, 54, 61):
+        assert cap_story()[0] == 'CHECK LENGTH'
+        press_select()  # Validate the complete input, not a longer body.
     title, story = cap_story()
     assert title == "Share '%s'" % text[8].upper()
     assert 'Checksum:\n\n' + text[-checksum_len:].upper() in story
@@ -370,7 +373,7 @@ def test_calculate_checksum_ms_complete_length_requires_confirmation(
     enter_bech32(damaged)
     assert cap_story()[0] == 'CHECK LENGTH'
     assert '%d-bit MS1' % (short_size * 8) in cap_story()[1]
-    press_cancel()  # This is a damaged complete backup, not a longer body.
+    press_select()  # Validate as a complete backup, not a longer body.
     assert cap_story()[0] == 'FAILED'
     assert active_secret() == before
     press_select()
@@ -387,8 +390,24 @@ def test_calculate_checksum_longer_ms_body_with_explicit_confirmation(
     need_keypress('0')
     enter_bech32(share.to_string()[:-13])
     assert cap_story()[0] == 'CHECK LENGTH'
-    press_select()
+    need_keypress('1')  # Choose the longer checksum-less body explicitly.
     assert parse_rendered_codex32(cap_story()[1].split('Codex32:', 1)[1]) == share.to_string()
+    press_cancel()
+
+
+def test_calculate_checksum_valid_short_ms_is_also_longer_body(
+        goto_codex32_menu, pick_menu_item, cap_story, enter_bech32,
+        need_keypress, press_cancel, is_q1):
+    shorter = Share.from_seed(bytes(range(16)), 'ms', 'test', SECRET, 0).to_string()
+    longer = Share.from_body(shorter)
+    assert len(longer.to_seed_and_pad()[0]) == 24
+    goto_codex32_menu(tmp=True)
+    pick_menu_item('Calculate Checksum' if is_q1 else 'Calc Checksum')
+    need_keypress('0')
+    enter_bech32(shorter)
+    assert cap_story()[0] == 'CHECK LENGTH'
+    need_keypress('1')
+    assert parse_rendered_codex32(cap_story()[1].split('Codex32:', 1)[1]) == longer.to_string()
     press_cancel()
 
 

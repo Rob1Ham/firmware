@@ -1256,10 +1256,12 @@ def test_codex32_shamir_split(hrp, sec_len, m_n, way, initial_threshold, set_enc
 
 @pytest.fixture
 def recover_codex32_shares(goto_shamir_recover, cap_story, need_keypress, is_q1, press_nfc,
-                           nfc_write_text, scan_a_qr, enter_bech32, microsd_path,
-                           virtdisk_path, garbage_collector, pick_menu_item, cap_screen):
+                            nfc_write_text, scan_a_qr, enter_bech32, microsd_path,
+                            virtdisk_path, garbage_collector, pick_menu_item, cap_screen,
+                            press_select):
 
-    def doit(shares, way, tmp=False, seed_vault=False, fnames=None, spaced=False):
+    def doit(shares, way, tmp=False, seed_vault=False, fnames=None, spaced=False,
+             acknowledge=True):
         def format_share(value):
             return ' '.join(value[i:i+4] for i in range(0, len(value), 4)) if spaced else value
 
@@ -1320,7 +1322,39 @@ def recover_codex32_shares(goto_shamir_recover, cap_story, need_keypress, is_q1,
                 check_recover_story(story, threshold, uid, pos, first.hrp,
                                     indices=[s[8] for s in shares[:pos]], is_q1=is_q1)
 
+        if first.hrp in ('cw', 'cx'):
+            time.sleep(.1)
+            title, story = cap_story()
+            assert title == first.hrp.upper() + '1 RECOVERY'
+            assert 'known address' in story
+            if acknowledge:
+                press_select()
+
     return doit
+
+
+@pytest.mark.parametrize('hrp', ['cw', 'cx'])
+def test_recovery_profile_warning_can_cancel_without_changing_wallet(
+        hrp, set_seed_words, settings_set, active_secret, recover_codex32_shares,
+        cap_story, press_cancel, reset_seed_words):
+    set_seed_words('extra sport youth surge capital category kid ginger extend way cause hamster')
+    settings_set('seedvault', False)
+    payload = bytes(range(16)) if hrp == 'cw' else bytes(range(32)) + bytes(31) + b'\x01'
+    secret = Share.from_seed(payload, hrp, 'test', SECRET, 2)
+    mask = Share.from_seed(bytes(range(len(payload))), hrp, 'test', 'a', 2, 0)
+    derived = generate_share([secret, mask], 'c')
+    before = active_secret()
+    recover_codex32_shares([mask.to_string(), derived.to_string()], 'sd', tmp=True,
+                           acknowledge=False)
+    title, story = cap_story()
+    assert title == hrp.upper() + '1 RECOVERY'
+    if hrp == 'cw':
+        assert 'EMPTY passphrase' in story and 'reapply the exact original' in story
+    else:
+        assert 'NOT recovered or needed' in story and 'multisig descriptor' in story
+    press_cancel()
+    assert active_secret() == before
+    reset_seed_words()
 
 
 @pytest.mark.parametrize('sec_type', ['mnemonic', 'xprv', 'ms16', 'ms32', 'ms64'])

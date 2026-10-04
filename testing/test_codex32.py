@@ -349,6 +349,45 @@ def test_calculate_checksum_full_share(text, goto_codex32_menu, pick_menu_item,
     assert ('Calculate Checksum' if is_q1 else 'Calc Checksum') in cap_menu()
 
 
+@pytest.mark.parametrize('size', [16, 24])
+def test_calculate_checksum_damaged_complete_cw_requires_longer_size_confirmation(
+        size, goto_codex32_menu, pick_menu_item, cap_story, press_cancel,
+        press_select, enter_bech32, need_keypress, active_secret, is_q1):
+    before = active_secret()
+    original = Share.from_seed(bytes(range(size)), 'cw', 'test', SECRET, 2).to_string()
+    damaged = original[:-1] + ('Q' if original[-1] != 'Q' else 'P')
+    goto_codex32_menu(tmp=True)
+    pick_menu_item('Calculate Checksum' if is_q1 else 'Calc Checksum')
+    need_keypress('0')
+    enter_bech32(damaged)
+    title, story = cap_story()
+    assert title == 'CHECK LENGTH'
+    assert 'failed validation as a complete' in story
+    press_cancel()  # Do not reinterpret a bad checksum as new wallet data.
+    assert cap_story()[0] == 'FAILED'
+    assert 'invalid checksum' in cap_story()[1]
+    assert active_secret() == before
+    press_select()
+    press_cancel()
+
+
+@pytest.mark.parametrize('size', [24, 32])
+def test_calculate_checksum_cw_body_explicit_longer_size(
+        size, goto_codex32_menu, pick_menu_item, cap_story, press_select,
+        press_cancel, enter_bech32, need_keypress, is_q1):
+    share = Share.from_seed(bytes(range(size)), 'cw', 'test', SECRET, 2)
+    goto_codex32_menu(tmp=True)
+    pick_menu_item('Calculate Checksum' if is_q1 else 'Calc Checksum')
+    need_keypress('0')
+    enter_bech32(share.to_string()[:-13])
+    assert cap_story()[0] == 'CHECK LENGTH'
+    press_select()  # Confirm that the input is a checksum-less, longer CW1 body.
+    title, story = cap_story()
+    assert title == "Share 'S'"
+    assert parse_rendered_codex32(story.split('Codex32:', 1)[1]) == share.to_string()
+    press_cancel()
+
+
 @pytest.mark.parametrize('tmp', [False, True])
 def test_calculate_checksum_seedless_activation(tmp, unit_test, goto_codex32_menu,
                                                 pick_menu_item, press_select,

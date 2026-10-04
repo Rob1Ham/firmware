@@ -1497,11 +1497,26 @@ async def codex32_calculate_checksum(_1, _2, item):
             title='Calculate Checksum' if version.has_qwerty else 'Calc Checksum',
             input_value=value)
         if not value: break
+        value = value.strip().replace(' ', '')
         try:
-            share = Share.parse(value.strip().replace(' ', ''))
+            share = Share.parse(value)
         except Exception:
+            # A complete, damaged 12/18-word CW1 share is the same length as
+            # the checksum-less body of an 18/24-word share. Do not silently
+            # turn its old checksum into wallet data and offer activation.
+            if value[:3].lower() == 'cw1' and len(value) in (48, 61):
+                shorter, longer = ((12, 18) if len(value) == 48 else (18, 24))
+                if not await ux_confirm(
+                        'This input failed validation as a complete %d-word CW1 share.'
+                        '\n\nIt could instead be the header and payload of a %d-word share'
+                        ' WITHOUT a checksum. Only continue if you intended that longer'
+                        ' size and have not entered any checksum characters.' % (shorter, longer),
+                        title='CHECK LENGTH'):
+                    await ux_show_story('Complete CW1 share has an invalid checksum.',
+                                        title='FAILED')
+                    continue
             try:
-                share = Share.from_body(value.strip().replace(' ', ''))
+                share = Share.from_body(value)
             except Exception as exc:
                 await ux_show_story('Invalid Codex32 header or payload.\n\n%s' % exc,
                                     title='FAILED')

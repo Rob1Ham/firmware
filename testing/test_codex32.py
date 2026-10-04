@@ -316,7 +316,7 @@ def test_calculate_checksum_manual(text, goto_codex32_menu, pick_menu_item, cap_
     if not is_headless:
         need_keypress(KEY_QR if is_q1 else '4')
         time.sleep(.3)
-        assert cap_screen_qr().decode('ascii') == text.upper()
+        wait_for_qr(cap_screen_qr, text.upper())
         press_cancel()
         time.sleep(.2)
     assert sim_exec(snapshot) == before
@@ -882,6 +882,23 @@ def wait_for_story(cap_story, title=None, contains=None, timeout=3):
         time.sleep(.1)
 
 
+def wait_for_qr(cap_screen_qr, expected, timeout=3):
+    """Decode the requested QR after the simulator finishes drawing its frame."""
+    deadline = time.monotonic() + timeout
+    while True:
+        try:
+            value = cap_screen_qr().decode('ascii')
+        except RuntimeError as exc:
+            if str(exc) != 'qr code not found':
+                raise
+            value = None
+        if value == expected:
+            return
+        if time.monotonic() >= deadline:
+            assert value == expected, 'Expected QR %r, got %r' % (expected, value)
+        time.sleep(.1)
+
+
 def check_recover_story(story, threshold=None, uid=None, num_collected=0, hrp=None,
                         indices=None, is_q1=False):
     assert 'Collected: %d' % num_collected in story
@@ -1029,7 +1046,7 @@ def test_view_seed_words_codex32(share, display, set_encoded_secret, goto_home,
 
     if not is_headless:
         need_keypress(KEY_QR if is_q1 else '1')
-        assert cap_screen_qr().decode('ascii') == expected_qr
+        wait_for_qr(cap_screen_qr, expected_qr)
         press_cancel()
         time.sleep(.1)
         assert cap_story() == [title, body]
@@ -1982,7 +1999,7 @@ def test_new_codex32_wallet(size, tmp, dice, unit_test, goto_codex32_menu, pick_
 
     need_keypress(KEY_QR if is_q1 else '1')
     if not (is_q1 and is_headless):
-        assert cap_screen_qr().decode('ascii') == value
+        wait_for_qr(cap_screen_qr, value)
     press_cancel()
     press_nfc()
     time.sleep(.2)

@@ -13,7 +13,7 @@ from bip32 import BIP32Node, PrvKeyNode
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'shared'))
-from codex32 import (Share, generate_share, bech32_to_array,
+from codex32 import (Share, generate_share, parse_saved_shares, bech32_to_array,
                      codex32_create_checksum, codex32_verify_checksum)
 
 VECTORS = json.loads((ROOT / 'docs/codex32-extension-vectors.json').read_text())
@@ -235,3 +235,17 @@ def test_interpolation_requires_exact_threshold(target, case):
 
     with pytest.raises(AssertionError, match='need exactly 2 shares'):
         generate_share(shares, target)
+
+
+def test_saved_shares_reject_incompatible_or_overthreshold_state():
+    a = Share.parse('MS12W7F2AQQQSYQCYQ5RQWZQFPG9SCRGWPUAM077H9XN5W88')
+    c = Share.parse('MS12W7F2CFFFGRFURFZ6FJVFTLA4GU6AJL3SM7JJ23UZRHJU')
+    s = generate_share([a, c], 's')
+    assert parse_saved_shares([a.to_string()]) == [a]
+    for invalid in ([a.to_string(), c.to_string()], [s.to_string()],
+                    [a.to_string(), a.to_string()], [a.to_string(), 'garbage'],
+                    [a.to_string(), Share.from_seed(bytes(16), 'ms', 'cash',
+                                                    'c', 2, 0).to_string()],
+                    'not a list'):
+        with pytest.raises((AssertionError, ValueError)):
+            parse_saved_shares(invalid)

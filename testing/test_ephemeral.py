@@ -326,6 +326,15 @@ def verify_ephemeral_secret_ui(cap_story, cap_menu, dev, fake_txn, goto_home,
         assert menu[-1] == "Restore Master"  # restore main from ephemeral
 
         if seed_vault:
+            # The temporary-wallet home menu can precede its Seed Vault item
+            # by a redraw after XOR recovery. Require the item to appear.
+            for _ in range(30):
+                if "Seed Vault" in cap_menu():
+                    break
+                time.sleep(.1)
+                goto_home()
+            else:
+                pytest.fail('Seed Vault did not appear in temporary-wallet menu')
             pick_menu_item("Seed Vault")
             time.sleep(.1)
             sc_menu = cap_menu()

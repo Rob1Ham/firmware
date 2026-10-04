@@ -258,8 +258,11 @@ Shares are collected from external sources only. Neither the active wallet nor
 Seed Vault supplies shares to recovery or derivation.
 
 In Shamir Recover or Derive Shares, cancel and choose **Save & Exit** to save a
-partial set and resume later. Saved shares are encrypted when a master wallet is
-configured; otherwise, they are stored without confidentiality protection.
+partial set and resume later when a master wallet is configured. If the master
+wallet is blank, even when using a temporary wallet, shares cannot be safely
+saved: continue collecting or discard them. The PIN alone does not encrypt
+seedless settings. Existing shares saved on older firmware remain sensitive;
+clearing settings does not establish a secure erase of old flash contents.
 
 Shamir Recover and Derive Shares share one saved partial set. Opening either
 automatically resumes that set. To start a different set, cancel at the import

@@ -2953,11 +2953,18 @@ async def collect_codex32_shares(title):
         value = await import_codex32_share(intro, title if version.has_qwerty else None, prefix)
         if value is False:
             if not shares: return
-            msg = 'Discard collected shares?\n\nPress (1) to Save & Exit.'
             if pa.is_secret_blank():
-                msg += ('\n\nWARNING: Without a master wallet, saved shares will not be'
-                        ' protected by encryption.')
-            ch = await ux_show_story(msg, escape='1')
+                # master_set writes under the seedless, publicly known settings
+                # key even when a temporary wallet is active. Do not persist
+                # shares unless a protected master wallet exists.
+                ch = await ux_show_story('Discard collected shares?\n\nWithout a'
+                                         ' master wallet they cannot be saved securely.'
+                                         ' Continue collecting or discard.', title='NO SAVE')
+                if ch != 'y': continue
+                settings.master_set('c32_shares', [])
+                return
+            ch = await ux_show_story('Discard collected shares?\n\nPress (1) to Save & Exit.',
+                                     escape='1')
             if ch not in "1y": continue
             if ch == '1':
                 dis.fullscreen('Saving...')

@@ -154,3 +154,38 @@ run after the adapter landed. Lattice root agreement host<->device over
 real PSBT tx bytes: `8317744dbdd8cb62975ede46c71874681de147bcc95a6c6e3e`
 `a244261c3ea6e1` (5 leaves). Generated PSBTs live in unix/work/sim-e2e
 (not committed; regenerate with the generator).
+
+## Session 2026-10-14 (d) — basic host app: funding PSBT -> vault PSBT tree
+
+- **`hostapp/vault_tree.py`** (new, CPython host tool): accepts a funding
+  PSBT in three shapes — "just the input" (inputs w/ witness utxos, no
+  outputs), input(s) with an INCORRECT output (warned + replaced), or an
+  already-correct output paying S_v (accepted as deposit) — and builds
+  the vault PSBT tree: `deposit.psbt` (funding -> S_v, funding input
+  maps carried verbatim), `emg<i>.psbt` pre-authorized emergency leaves
+  (spend deposit txid:vout0, SEQ_EMERGENCY, nLockTime==0, fee ladder,
+  S_e destination) and `manifest.json` (device-enrollment cfg + HOST
+  lattice root for the enrollment confirmation). Rule layer imported
+  from shared/vault_policy.py so host/device agree by construction.
+  CLI: `init-policy` (sample/demo keys) + `build`; fee/leaf params
+  overridable. Minimal host PSBT/tx codec included (parse + serialize).
+- **`unix/vault_sim_e2e.py` generalized**: manifest dir via
+  VAULT_E2E_DIR env var; reads `manifest.json` (app) or `expected.json`
+  (generator); leaf list from manifest `files`; strict/ccc sections and
+  the ladder_bad check are optional (skipped when absent).
+- **`testing/test_vault_hostapp.py`**: 54 checks — all three funding
+  shapes, deposit pays S_v at funding-fee, funding input maps carried,
+  every leaf chained to the deposit txid w/ correct witness utxo, fee
+  ladder, and the lattice root RE-DERIVED INDEPENDENTLY from the
+  written files (not the manifest).
+- Portability bug found + fixed: the app originally prepended shared/
+  to sys.path, letting firmware shims (shared/random.py -> ngu) shadow
+  CPython stdlib and break `import secrets`; now appended.
+- Device validation: app-built tree (input-only funding case) run
+  through unix/vault_sim_e2e.py in coldcard-mpy with real
+  psbtObject parsing: enroll -> enable -> lattice root == manifest
+  root -> all 5 leaves approved at the auth.py choke point ->
+  `VAULT SIM E2E: 10/10 checks pass`.
+- Test reality: hostapp 54/54; e2e 16/16 (regression, generator path);
+  smoke 14/14; glue 34/34; policy 8/8. All in one run after the
+  sys.path fix.

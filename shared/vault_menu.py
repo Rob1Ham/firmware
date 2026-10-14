@@ -38,6 +38,7 @@ class VaultConfigMenu(MenuSystem):
             MenuItem(('[ON] ' if on else '[OFF] ') + 'Vault Mode',
                      f=self.toggle_enable),
             MenuItem('Enroll Policy', f=self.enroll_policy),
+            MenuItem('Enroll Lattice', f=self.enroll_lattice),
             MenuItem('Cadence N', f=self.set_n),
             MenuItem('Max Fee (sats)', f=self.set_fee),
             MenuItem('Exit Destination', f=self.show_exit),
@@ -134,13 +135,62 @@ class VaultConfigMenu(MenuSystem):
                             title='VAULT')
 
     async def show_root(self, *a):
-        # Lattice commitment root is enrolled by the (pending) lattice
-        # flow; show whatever is stored, if anything.
+        # Lattice commitment root (enrolled via 'Enroll Lattice').
         cfg = vault._cfg()
         root = cfg.get('lattice_root')
-        await ux_show_story('Lattice commitment root:\n\n%s'
-                            % (root or '(lattice not yet enrolled)'),
+        if root:
+            msg = 'Root:\n\n%s\n\nLeaves: %s' % (root, cfg.get('lattice_count'))
+        else:
+            msg = '(lattice not yet enrolled)'
+        await ux_show_story('Lattice commitment:\n\n%s' % msg, title='VAULT')
+
+    async def enroll_lattice(self, *a):
+        # Lattice commitment plan T5: select .psbt files one at a time
+        # until cancelled; the whole batch is shape-validated against the
+        # enrolled policy; the Merkle root is streamed and displayed for
+        # comparison against the host's root; stored only on confirmation.
+        from actions import file_picker
+        from files import CardSlot
+        from psbt import psbtObject
+
+        cfg = vault._cfg()
+        if not vault.validate_cfg(cfg)[0]:
+            await ux_show_story('Enroll a valid policy first.', title='VAULT')
+            return
+
+        psbts = []
+        while True:
+            fn = await file_picker(suffix=['.psbt'], min_size=10, max_size=200000,
+                                   none_msg='PSBT lattice member (%d loaded)'
+                                   % len(psbts))
+            if not fn:
+                break
+            try:
+                with CardSlot(readonly=True) as card:
+                    with open(fn, 'rb') as fd:
+                        psbts.append(psbtObject.read_psbt(fd))
+            except Exception as e:
+                await ux_show_story('Cannot read PSBT: %s' % e, title='VAULT')
+                return
+
+        if not psbts:
+            return
+
+        try:
+            root_hex, count = vault.enroll_lattice(cfg, psbts)
+        except Exception as e:
+            await ux_show_story('Lattice rejected:\n\n%s' % e, title='VAULT')
+            return
+
+        await ux_show_story('Lattice: %d leaves\n\nRoot: %s...%s\n\n'
+                            'Compare against the host root.' % (count,
+                            root_hex[:8], root_hex[-8:]), title='VAULT')
+        if not await ux_confirm('Root matches host?'):
+            return
+        vault.store_lattice(root_hex, count)
+        await ux_show_story('Lattice commitment stored (%d leaves).' % count,
                             title='VAULT')
+        self.update_contents()
 
     async def wipe(self, *a):
         if not await ux_confirm('Wipe vault policy?'):

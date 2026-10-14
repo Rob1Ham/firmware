@@ -46,9 +46,19 @@ Branch `vault-cosign-policy` on coldcard-vault (Coldcard firmware fork).
    (USB/SD, enrolls dark), Cadence N, Max Fee, Exit Destination,
    Commitment Root, Wipe. Settings key is `vault`; gameplan docs updated
    from `vaultcfg` to match the implementation.
-4. Lattice commitment implementation per tentative plan
-   (`leaf_hash`/`lattice_root` streaming carry-tree, enrollment flow,
-   root display, tests incl. odd-count parity).
+4. DONE 2026-10-14 — lattice commitment implemented per plan:
+   `vault_policy.py` gained `sha256d`/`leaf_hash` (T3: dSHA256 of
+   LE32(index)+unsigned-tx bytes)/`lattice_root` (T4: Bitcoin-style
+   dup-last Merkle over a streamed carry-stack, O(log n) RAM, 2^16 leaf
+   cap, empty-set refused); `vault.py` gained `enroll_lattice`
+   (full-batch shape validation w/ leaf-indexed errors + root, never
+   writes settings) and `store_lattice` (persists lattice_root/
+   lattice_count only after user confirms root == host root);
+   `vault_menu.py` gained 'Enroll Lattice' (file-by-file .psbt selection,
+   root short-form display, confirm-then-store) and the root+count
+   display. Parity proven vs a naive two-pass reference tree across
+   13 batch sizes incl. odd counts. USB framed transport (plan T7.4)
+   simplified to the existing file picker.
 5. Simulator run (unix/ port) once hook lands.
 
 ## Session 2026-10-14 (b) — vault mode glue landed (for real)

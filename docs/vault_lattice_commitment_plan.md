@@ -1,7 +1,17 @@
-# TENTATIVE Plan Element — Enrollment-Time Lattice Commitment (Merkle Root)
+# Plan Element — Enrollment-Time Lattice Commitment (Merkle Root)
 
-Status: **TENTATIVE** — scoped to enrollment/deposit-time only, per
-discussion 2026-10-14. NOT a spend-time enforcement mechanism.
+Status: **IMPLEMENTED 2026-10-14** — scoped to enrollment/deposit-time
+only, per discussion 2026-10-14. NOT a spend-time enforcement mechanism.
+Pure funcs (`sha256d`, `leaf_hash`, `lattice_root`) live in
+`shared/vault_policy.py`; enrollment orchestration (`enroll_lattice`,
+`store_lattice`) in `shared/vault.py`; menu wiring ('Enroll Lattice',
+'Show Commitment Root') in `shared/vault_menu.py`. Tests:
+`testing/test_vault_policy.py::test_lattice_commitment` (streaming vs
+naive-reference parity incl. odd counts, tamper/order/drop sensitivity,
+empty/oversize refusal) and the enrollment checks in
+`testing/test_vault.py`. T7.4 (framed USB batch transport) was
+simplified: the device-side flow selects `.psbt` files one at a time via
+the existing file picker instead of a custom framed stream.
 
 ## T1 Purpose
 

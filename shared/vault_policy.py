@@ -251,3 +251,79 @@ class VaultPolicy:
         if not any(self.k1 in (i.get("part_sigs") or []) for i in view["inputs"]):
             raise VaultViolation("P3: K1 co-signature required")
         return "exit ceremony F=%d" % fee
+
+
+# ---- Enrollment-time lattice commitment --------------------------------
+# Per docs/vault_lattice_commitment_plan.md (T3/T4). NOT a spend-time
+# enforcement mechanism: the device proves, at enrollment, that it agrees
+# with the host on the exact committed PSBT batch; runtime enforcement
+# remains the shape rules above.
+
+MAX_LATTICE_LEAVES = 0x10000        # T4: 2^16 leaf cap
+
+
+def sha256d(b):
+    # Bitcoin-convention double SHA256.
+    return _sha256(_sha256(b).digest()).digest()
+
+
+def _le32(i):
+    return bytes((i & 0xff, (i >> 8) & 0xff, (i >> 16) & 0xff, (i >> 24) & 0xff))
+
+
+def leaf_hash(index, unsigned_tx_bytes):
+    # T3: leaf_i = dSHA256(LE32(i) || unsigned_tx_bytes_i).
+    # - unsigned tx = PSBT global transaction: excludes all partial sigs
+    #   (sigs may legitimately vary/assemble later), so txid-equal txs
+    #   hash equal regardless of PSBT key-ordering across producers.
+    # - LE32 index prefix is position-binding: kills reorder ambiguity.
+    if not (0 <= index < MAX_LATTICE_LEAVES):
+        raise VaultViolation("leaf index out of range: %d" % index)
+    return sha256d(_le32(index) + bytes(unsigned_tx_bytes))
+
+
+def lattice_root(leaf_iter):
+    # T4: Bitcoin-style dup-last Merkle root over a LEAF STREAM.
+    # Carry-stack: stack[h] holds at most one unpaired node at height h,
+    # so peak RAM is O(log n) - a few KB on Mk4/Q even at the 2^16 cap.
+    # A pending node at a lower height always covers LATER leaves, so the
+    # final reduce walks the pendings right-to-left (low h to high h);
+    # the rightmost pending promotes by self-duplication (dup-last).
+    # Returns (root_bytes32, count). Empty set refused; cap enforced.
+    stack = []
+    count = 0
+    for leaf in leaf_iter:
+        leaf = bytes(leaf)
+        if len(leaf) != 32:
+            raise VaultViolation("leaf must be 32 bytes")
+        count += 1
+        if count > MAX_LATTICE_LEAVES:
+            raise VaultViolation("lattice too large (> %d)" % MAX_LATTICE_LEAVES)
+        node = leaf
+        h = 0
+        while h < len(stack) and stack[h] is not None:
+            node = sha256d(stack[h] + node)
+            stack[h] = None
+            h += 1
+        if h == len(stack):
+            stack.append(node)
+        else:
+            stack[h] = node
+
+    if count == 0:
+        raise VaultViolation("empty lattice")
+
+    acc, ha = None, 0
+    for h in range(len(stack)):
+        node = stack[h]
+        if node is None:
+            continue
+        if acc is None:
+            acc, ha = node, h
+            continue
+        while ha < h:
+            acc = sha256d(acc + acc)        # dup-promote the right subtree
+            ha += 1
+        acc = sha256d(node + acc)
+        ha = h + 1
+    return acc, count

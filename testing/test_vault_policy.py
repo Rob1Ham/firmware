@@ -162,6 +162,68 @@ def test_P3_exit_ceremony():
                                       out_spks=((EXIT_SPK, 154000),), vin=162000, sigs=[K1]))
 
 
+def test_lattice_commitment():
+    import hashlib
+
+    def dsha(b):
+        return hashlib.sha256(hashlib.sha256(b).digest()).digest()
+
+    def naive_root(hs):
+        # reference: two-pass array Merkle, Bitcoin dup-last convention
+        assert hs
+        lvl = list(hs)
+        while len(lvl) > 1:
+            if len(lvl) % 2:
+                lvl.append(lvl[-1])
+            lvl = [dsha(lvl[i] + lvl[i + 1]) for i in range(0, len(lvl), 2)]
+        return lvl[0]
+
+    txs = [bytes([i]) * (40 + i) for i in range(40)]
+
+    # T3 leaf definition: dSHA256(LE32(i) || unsigned_tx)
+    for i in (0, 1, 7, 0xFFFF):
+        assert vp.leaf_hash(i, txs[i % len(txs)]) == \
+            dsha(i.to_bytes(4, 'little') + txs[i % len(txs)])
+    try:
+        vp.leaf_hash(0x10000, txs[0])
+        raise AssertionError('accepted out-of-range index')
+    except vp.VaultViolation:
+        pass
+
+    # T4 parity: streaming carry-tree == naive reference, incl. odd counts
+    for n in (1, 2, 3, 4, 5, 6, 7, 8, 11, 16, 17, 33, 40):
+        leaves = [vp.leaf_hash(i, txs[i]) for i in range(n)]
+        root, cnt = vp.lattice_root(iter(leaves))
+        assert cnt == n
+        assert root == naive_root(leaves), 'parity failed at n=%d' % n
+
+    # generator (true streaming) matches list input
+    r_gen, _ = vp.lattice_root(vp.leaf_hash(i, txs[i]) for i in range(13))
+    assert r_gen == naive_root([vp.leaf_hash(i, txs[i]) for i in range(13)])
+
+    # tamper sensitivity: reorder / mutate one leaf / drop a leaf
+    base = [vp.leaf_hash(i, txs[i]) for i in range(5)]
+    r0, _ = vp.lattice_root(iter(base))
+    swapped = list(base)
+    swapped[1], swapped[2] = swapped[2], swapped[1]
+    assert vp.lattice_root(iter(swapped))[0] != r0
+    mutated = [dsha(h) if i == 3 else h for i, h in enumerate(base)]
+    assert vp.lattice_root(iter(mutated))[0] != r0
+    assert vp.lattice_root(iter(base[:4]))[0] != r0
+
+    # empty set / bad leaf size refused
+    try:
+        vp.lattice_root(iter([]))
+        raise AssertionError('accepted empty lattice')
+    except vp.VaultViolation:
+        pass
+    try:
+        vp.lattice_root(iter([b'x' * 31]))
+        raise AssertionError('accepted short leaf')
+    except vp.VaultViolation:
+        pass
+
+
 TESTS = [v for k, v in sorted(globals().items()) if k.startswith('test_')]
 
 if __name__ == '__main__':

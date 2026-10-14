@@ -133,6 +133,43 @@ vault.wipe()
 ok('wiped', not vault._cfg())
 ok('enable refused after wipe', not vault.set_enabled(True)[0])
 
+# --- 9 lattice commitment enrollment -------------------------------------------------
+def lat_psbt(i, fee=500):
+    p = p_emg(fee=fee)
+    p.txn = bytes([i]) * (60 + i)      # stands in for raw global unsigned-tx bytes
+    return p
+
+enable(dict(CFG, enabled=1))
+members = [lat_psbt(i) for i in range(5)]
+root_hex, cnt = vault.enroll_lattice(CFG, members)
+ok('lattice root is 64 hex', isinstance(root_hex, str) and len(root_hex) == 64)
+ok('lattice count', cnt == 5)
+
+r_rev, _ = vault.enroll_lattice(CFG, list(reversed(members)))
+ok('order sensitivity', r_rev != root_hex)
+
+members[2].txn = b'\xff' * 62          # one member's tx bytes changed
+r_tamper, _ = vault.enroll_lattice(CFG, members)
+ok('tamper sensitivity', r_tamper != root_hex)
+
+bad = lat_psbt(9)
+bad.inputs[0].sequence = N - 10        # wrong-N ladder member
+try:
+    vault.enroll_lattice(CFG, [lat_psbt(0), bad])
+    ok('invalid member refused', False)
+except vault.VaultViolation as e:
+    ok('invalid member refused', 'lattice[1]' in str(e))
+
+try:
+    vault.enroll_lattice(CFG, [])
+    ok('empty lattice refused', False)
+except vault.VaultViolation:
+    ok('empty lattice refused', True)
+
+vault.store_lattice(root_hex, cnt)
+ok('root stored', vault._cfg().get('lattice_root') == root_hex)
+ok('count stored', vault._cfg().get('lattice_count') == 5)
+
 fails = [n for n, c in R if not c]
 print('VAULT GLUE: %d/%d checks pass' % (len(R) - len(fails), len(R)))
 for n in fails: print('    FAIL: %s' % n)

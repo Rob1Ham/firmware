@@ -16,7 +16,12 @@
 #
 # pyright: reportMissingImports=false
 
-from vault_policy import VaultPolicy, VaultViolation
+from vault_policy import VaultPolicy, VaultViolation, leaf_hash, lattice_root
+
+try:
+    from ubinascii import hexlify as _hexlify
+except ImportError:
+    from binascii import hexlify as _hexlify
 
 VAULT_LOG = 'vault.log'
 
@@ -169,6 +174,46 @@ def set_enabled(on):
         return False, 'cannot save: %s' % (e,)
     vault_log('CFG %s' % ('enabled' if on else 'disabled'))
     return True, 'ok'
+
+
+def _b2h(b):
+    return str(_hexlify(bytes(b)), 'ascii')
+
+
+def enroll_lattice(cfg, psbt_iter):
+    # Lattice enrollment, T5 steps 3-4 of the commitment plan:
+    #   1. every member is shape-validated against the policy (full-batch
+    #      check at enrollment; any failure raises with the leaf index)
+    #   2. leaves are hashed from .txn (the raw global unsigned-tx bytes)
+    #      and streamed into the Merkle carry-tree
+    # Returns (root_hex, count). NEVER writes settings: the caller must
+    # display the root, get user confirmation vs the host UI, and only
+    # then call store_lattice.
+    pol = VaultPolicy(cfg)
+
+    def leaves():
+        for i, psbt in enumerate(psbt_iter):
+            try:
+                pol.check(view_from_psbt(psbt))
+            except VaultViolation as e:
+                raise VaultViolation('lattice[%d]: %s' % (i, e))
+            tx = getattr(psbt, 'txn', None)
+            if not tx:
+                raise VaultViolation('lattice[%d]: missing unsigned tx' % i)
+            yield leaf_hash(i, tx)
+
+    root, count = lattice_root(leaves())
+    return _b2h(root), count
+
+
+def store_lattice(root_hex, count):
+    # T5 step 6: persist the commitment. Call ONLY after the user has
+    # confirmed device-root == host-root on screen.
+    cfg = _cfg()
+    cfg['lattice_root'] = root_hex
+    cfg['lattice_count'] = count
+    save_cfg(cfg)
+    vault_log('CFG lattice %d leaves' % count)
 
 
 class VaultMode:

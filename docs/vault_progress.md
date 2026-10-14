@@ -13,7 +13,7 @@ Branch `vault-cosign-policy` on coldcard-vault (Coldcard firmware fork).
 - `docs/vault_signing_gameplan.md` — hook recon + ruleset + design.
 - `docs/vault_device_mode_gameplan.md` — device-mode integration plan
   (Option 2: standalone `VaultFeature`; Option 1: CCC `meets_policy`
-  delegation; view builder spec; NVS `vaultcfg`; minimal menu; 5-commit
+  delegation; view builder spec; NVS `vault`; minimal menu; 5-commit
   landing order).
 - `docs/vault_lattice_commitment_plan.md` — TENTATIVE enrollment-time
   Merkle commitment over the vault PSBT lattice (leaf = dSHA256 of
@@ -36,10 +36,16 @@ Branch `vault-cosign-policy` on coldcard-vault (Coldcard firmware fork).
 
 1. DONE 2026-10-14 (second attempt) — `shared/vault.py` `VaultMode` glue +
    auth.py hook + host test suite. See "Session 2026-10-14 (b)" below.
-2. `ccc.py` delegation in `meets_policy` + ratchet skip for vault txs.
-3. Minimal VaultPolicyConfigMenu (test-only, no warning screens).
-   Note: gameplan says NVS key `vaultcfg`; implemented glue reads
-   settings key `vault` — reconcile before menu work.
+2. DONE 2026-10-14 — `ccc.py` `meets_policy` skips the height-based
+   velocity ratchet for vault-relevant txs (they pin nLockTime==0, which
+   the ratchet would always refuse); warnings / magnitude / whitelist
+   still apply (belt-and-suspenders).
+3. DONE 2026-10-14 — `shared/vault_menu.py` `VaultConfigMenu` + flow.py
+   'Vault Co-Sign' item in the Spending Policy submenu. Menu: Vault Mode
+   on/off (refused until enrolled + valid), Enroll Policy via JSON file
+   (USB/SD, enrolls dark), Cadence N, Max Fee, Exit Destination,
+   Commitment Root, Wipe. Settings key is `vault`; gameplan docs updated
+   from `vaultcfg` to match the implementation.
 4. Lattice commitment implementation per tentative plan
    (`leaf_hash`/`lattice_root` streaming carry-tree, enrollment flow,
    root display, tests incl. odd-count parity).

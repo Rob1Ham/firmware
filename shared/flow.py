@@ -20,6 +20,7 @@ from paper import make_paper_wallet
 from trick_pins import TrickPinMenu
 from tapsigner import import_tapsigner_backup_file
 from ccc import toggle_ccc_feature, sssp_spending_policy, sssp_feature_menu
+from vault_menu import vault_feature_menu
 from wif import WIFStoreMenu
 
 # useful shortcut keys
@@ -409,6 +410,7 @@ SpendingPolicySubMenu = [
     NonDefaultMenuItem('Single-Signer', 'sssp', f=sssp_feature_menu, predicate=has_real_secret),
     NonDefaultMenuItem('Co-Sign Multi.' if not version.has_qwerty else 'Co-Sign Multisig (CCC)',
                 'ccc', f=toggle_ccc_feature, predicate=is_not_tmp),
+    MenuItem('Vault Co-Sign', f=vault_feature_menu),
     ToggleMenuItem('HSM Mode', 'hsmcmd', ['Default Off', 'Enable'],
        story=("Enable HSM? Enables all user management commands, and other HSM-only USB commands. "
               "By default these commands are disabled."),

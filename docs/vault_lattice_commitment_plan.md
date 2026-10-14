@@ -12,7 +12,7 @@ displays ROOT on its UI. The DEVICE, during enrollment, receives the
 same set, recomputes ROOT, displays it. User eyeballs host-root ==
 device-root => cryptographic proof host and device agree on the exact
 committed batch BEFORE any deposit funds the vault. Device stores root
-(+leaf count) in settings["vaultcfg"].
+(+leaf count) in settings["vault"].
 
 ## T2 Why not spend-time?
 
@@ -62,7 +62,7 @@ together; shape rules unchanged.
 5. Display root (short form + count). Chooser y/n: user compares to
    host UI root. On 'n': wipe session, no settings write, back out.
 6. On 'y': stable-marshal policy dict INCLUDING lattice_root/
-   lattice_count into settings["vaultcfg"].
+   lattice_count into settings["vault"].
 
 ## T6 Deposit-time gating
 

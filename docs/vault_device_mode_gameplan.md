@@ -55,7 +55,7 @@ template parse at use time => refuse.
 
 ## Policy storage (NVS)
 
-settings key `"vaultcfg"` (StorableDict-style, mirrors SpendingPolicy):
+settings key `"vault"` (StorableDict-style, mirrors SpendingPolicy):
 `enabled, strict, sv_script, se_script, spk_v, spk_e, k1_pubkey, n,
 f0_max, exit_spk, lattice_root, lattice_count`. Templates validated with
 `parse_vault_script`/`parse_deepvault_script` BEFORE storing =
@@ -66,7 +66,7 @@ INV-KEYLESS/INV-BRANCH enforced at enrollment.
 scripts+params+full PSBT set in ONE enrollment session => template checks
 => per-PSBT shape check (full lattice validated at enrollment) =>
 lattice root derived + displayed => user eyeball-confirms vs host =>
-stable-marshal -> settings["vaultcfg"] See LATTICE PLAN doc for the root
+stable-marshal -> settings["vault"] See LATTICE PLAN doc for the root
 commitment (tentative element).
 
 ## Menu (minimal, test-only; idiom: PolicyConfigMenuBase/CCCConfigMenu,

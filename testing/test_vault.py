@@ -13,6 +13,10 @@ _store = {'vault': None}
 class _FakeSettings:
     def get(self, k, d=None):
         return _store.get(k, d)
+    def set(self, k, v):
+        _store[k] = v
+    def remove_key(self, k):
+        _store.pop(k, None)
 
 glob_mod = types.ModuleType('glob')
 glob_mod.settings = _FakeSettings()
@@ -106,6 +110,28 @@ vault.vault_log('TEST1'); vault.vault_log('TEST2')
 lines = open('vault.log').read().splitlines()
 ok('log has entries', len(lines) >= 2)   # earlier could_sign calls also log
 ok('log content', any('TEST1' in l for l in lines) and any('TEST2' in l for l in lines))
+
+# --- 8 enroll/enable lifecycle (menu helpers) ---------------------------------------
+_store['vault'] = None
+r1, m1 = vault.set_enabled(True)
+ok('enable refused when empty', (not r1) and 'no policy' in m1)
+ok('validate rejects empty', not vault.validate_cfg({})[0])
+
+vault.save_cfg(dict(CFG, sv_hash='zz'))       # unparseable hex
+ok('validate rejects bad hex', not vault.validate_cfg(vault._cfg())[0])
+
+vault.save_cfg(dict(CFG))                     # enroll dark
+ok('enrolled dark', not vault.is_enabled())
+r2, m2 = vault.set_enabled(True)
+ok('enable works', r2 and vault.is_enabled())
+ok('cfg preserved', vault._cfg().get('sv_hash') == SPK_V.hex())
+
+r3, m3 = vault.set_enabled(False)
+ok('disable works', r3 and not vault.is_enabled())
+
+vault.wipe()
+ok('wiped', not vault._cfg())
+ok('enable refused after wipe', not vault.set_enabled(True)[0])
 
 fails = [n for n, c in R if not c]
 print('VAULT GLUE: %d/%d checks pass' % (len(R) - len(fails), len(R)))

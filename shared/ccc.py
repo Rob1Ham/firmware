@@ -81,6 +81,20 @@ class SpendingPolicy(dict):
         # Does policy allow signing this? Else raise why. Return T if web2fa required.
         pol = self
 
+        # Vault co-signer mode: when a vault policy is enrolled and this PSBT
+        # is vault-relevant, the vault rule layer (vault_policy.py, enforced
+        # at the auth.py choke point) owns the timing constraints. Vault txs
+        # commit nLockTime == 0, which the height-based velocity ratchet
+        # below would always refuse. Belt-and-suspenders: warnings,
+        # magnitude and whitelist checks still apply to vault txs.
+        vault_tx = False
+        try:
+            import vault
+            if vault.VaultMode.is_enabled():
+                vault_tx = vault.check_relevance(psbt, vault._cfg())
+        except Exception:
+            vault_tx = False
+
         # not safe to sign any txn w/ warnings: might be complaining about
         # massive miner fees, or weird OP_RETURN stuff
         if psbt.warnings:
@@ -99,7 +113,7 @@ class SpendingPolicy(dict):
 
         # Velocity: if zero => no velocity checks
         velocity = pol.get("vel", None)
-        if velocity:
+        if velocity and not vault_tx:
             if not psbt.lock_time:
                 raise SpendPolicyViolation("no nLockTime")
 

@@ -125,6 +125,52 @@ def vault_log(msg, logfile=VAULT_LOG):
         pass
 
 
+def validate_cfg(cfg):
+    # Minimum enrollable policy shape. Returns (ok, msg); never raises.
+    if not cfg:
+        return False, 'no policy enrolled'
+    for k in ('sv_hash', 'spk_e', 'k1_pubkey', 'exit_spk'):
+        if not cfg.get(k):
+            return False, 'missing %s' % k
+    try:
+        VaultPolicy(cfg)
+    except Exception as e:
+        return False, 'bad policy: %s' % (e,)
+    return True, 'ok'
+
+
+def save_cfg(cfg):
+    # Persist the vault settings dict under settings key 'vault'.
+    from glob import settings
+    settings.set('vault', cfg)
+
+
+def wipe():
+    # Remove the vault policy entirely. Cannot be undone.
+    try:
+        from glob import settings
+        settings.remove_key('vault')
+    except Exception:
+        pass
+
+
+def set_enabled(on):
+    # Flip vault mode. Enabling is refused until the enrolled policy
+    # passes validate_cfg. Returns (ok, msg); never raises.
+    cfg = _cfg()
+    if on:
+        ok, msg = validate_cfg(cfg)
+        if not ok:
+            return False, msg
+    cfg['enabled'] = 1 if on else 0
+    try:
+        save_cfg(cfg)
+    except Exception as e:
+        return False, 'cannot save: %s' % (e,)
+    vault_log('CFG %s' % ('enabled' if on else 'disabled'))
+    return True, 'ok'
+
+
 class VaultMode:
     # Marker/handle class, CCCFeature style, so auth.py call sites read like
     # the existing feature blocks. All methods class-level.

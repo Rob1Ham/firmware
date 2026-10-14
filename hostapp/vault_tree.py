@@ -132,12 +132,26 @@ def parse_psbt(blob):
             vs, p = read_vi(blob, p)
             val = blob[p:p + vs]
             p += vs
-            if key[0] == 0x01:                    # PSBT_IN_WITNESS_UTXO
+            if key == b'\x01':                    # PSBT_IN_WITNESS_UTXO
+                # BIP-174: this key has no key data; keys of the form
+                # '01 <data>' are unknown keys (passed through verbatim
+                # via in_maps) and must NOT be read as utxos.
                 # CTxOut: value LE64 + varstring spk
                 v = struct.unpack('<q', val[:8])[0]
                 slen, q = read_vi(val, 8)
                 wutxos.append((val[q:q + slen], v))
         in_maps.append(blob[start:p])
+
+    for _ in range(len(outs)):                    # one map per output
+        while True:
+            ks, p = read_vi(blob, p)
+            if ks == 0:
+                break
+            p += ks
+            vs, p = read_vi(blob, p)
+            p += vs
+
+    assert p == len(blob), 'PSBT map count/length mismatch'
     return {'tx': tx, 'in_maps': in_maps, 'wutxos': wutxos,
             'ins': ins, 'outs': outs}
 
@@ -159,6 +173,21 @@ def ct_out(spk, value):
 
 # ---- policy -> scripts ----------------------------------------------------
 
+def push_num(n):
+    # Data-push encoding of the cadence N, padded so the script-num is
+    # always positive (a push whose last byte has the sign bit set, e.g.
+    # '01 C8' for N=200, is a NEGATIVE script number and is refused by
+    # parse_vault_script).
+    # NOTE: parse_vault_script requires a data push (not OP_1..OP_16), so
+    # N <= 16 is intentionally encoded non-minimally.
+    if not (1 <= n <= 0xFFFF):
+        raise SystemExit('ERROR: cadence N must be in 1..65535, got %d' % n)
+    payload = n.to_bytes((n.bit_length() + 7) // 8, 'little')
+    if payload[-1] & 0x80:
+        payload += b'\x00'        # keep the script-num positive
+    return bytes([len(payload)]) + payload
+
+
 def build_scripts(pol):
     # S_v (D-1'): OP_IF <N> OP_CSV OP_DROP OP_ELSE OP_ENDIF
     #             OP_2 <K1> <K2> <K3> OP_3 OP_CHECKMULTISIG
@@ -167,8 +196,7 @@ def build_scripts(pol):
         return bytes([len(b)]) + b
     k1, k2, k3 = pol['k1'], pol['k2'], pol['k3']
     n = pol['n']
-    n_push = bytes([2, n & 0xff, (n >> 8) & 0xff]) if n > 255 else \
-        (bytes([1, n]) if n > 0 else bytes([0]))
+    n_push = push_num(n)
     s_v = (bytes([vp.OP_IF]) + n_push +
            bytes([vp.OP_CSV, vp.OP_DROP, vp.OP_ELSE, vp.OP_ENDIF, 0x52]) +
            push(k1) + push(k2) + push(k3) + bytes([0x53, vp.OP_CMS]))
@@ -198,7 +226,7 @@ def cfg_from_policy(pol, s_v, s_e):
 
 def load_funding(path, spk_v, deposit_fee):
     # Accept, classify and normalize the funding PSBT. Returns
-    # (mode, tx_bytes, in_maps, vault_value).
+    # (mode, tx_bytes, in_maps, vault_value, total_in, vault_vout).
     blob = open(path, 'rb').read()
     ps = parse_psbt(blob)
     assert ps['wutxos'], 'funding PSBT needs witness utxos'
@@ -207,10 +235,26 @@ def load_funding(path, spk_v, deposit_fee):
     version, ins, outs, locktime = parse_tx(ps['tx'])
 
     match = [i for i, (spk, val) in enumerate(outs) if spk == spk_v]
+    # vout of the deposit output paying S_v: 0 in the rebuilt shapes,
+    # but the funding's own index when accepted verbatim
+    vault_vout = 0
     if not outs:
         mode = 'input-only'
-    elif match and outs[match[0]][1] == total_in - deposit_fee:
-        mode = 'already-correct'
+    elif match:
+        if len(match) != 1:
+            # ambiguous: only one output may pay S_v (which one is the
+            # deposit?); refuse rather than guess
+            raise SystemExit('ERROR: %d outputs pay S_v (expected exactly '
+                             'one); ambiguous funding refused' % len(match))
+        if outs[match[0]][1] != total_in - deposit_fee:
+            mode = 'incorrect-output'
+        elif sum(v for _, v in outs) > total_in:
+            raise SystemExit('ERROR: funding outputs (%d sats) exceed '
+                             'inputs (%d sats)' %
+                             (sum(v for _, v in outs), total_in))
+        else:
+            mode = 'already-correct'
+            vault_vout = match[0]
     else:
         mode = 'incorrect-output'
 
@@ -220,10 +264,11 @@ def load_funding(path, spk_v, deposit_fee):
     else:
         if mode == 'incorrect-output':
             print('WARNING: funding output does not pay S_v with value '
-                  'funding-fee; REPLACING outputs with the vault deposit')
+                  'funding-fee; REPLACING all outputs (incl. any change) '
+                  'with the vault deposit')
         vault_value = total_in - deposit_fee
         tx_bytes = ser_tx(version, ins, [(spk_v, vault_value)], locktime)
-    return mode, tx_bytes, ps['in_maps'], vault_value, total_in
+    return mode, tx_bytes, ps['in_maps'], vault_value, total_in, vault_vout
 
 
 def build_tree(pol, funding_path, outdir, deposit_fee, leaves,
@@ -232,20 +277,26 @@ def build_tree(pol, funding_path, outdir, deposit_fee, leaves,
     spk_v, spk_e = vp.p2wsh_spk(s_v), vp.p2wsh_spk(s_e)
     cfg = cfg_from_policy(pol, s_v, s_e)
 
-    mode, dep_tx, in_maps, vault_value, total_in = load_funding(
+    mode, dep_tx, in_maps, vault_value, total_in, vault_vout = load_funding(
         funding_path, spk_v, deposit_fee)
 
-    # deposit.psbt: funding -> S_v (input maps carried over verbatim)
+    # deposit.psbt: funding -> S_v (input maps carried over verbatim; one
+    # output map per output of the deposit tx)
     os.makedirs(outdir, exist_ok=True)
-    deposit = build_psbt(dep_tx, in_maps, 1)
+    version, dep_ins, dep_outs, locktime = parse_tx(dep_tx)
+    deposit = build_psbt(dep_tx, in_maps, len(dep_outs))
     open(os.path.join(outdir, 'deposit.psbt'), 'wb').write(deposit)
 
     dep_txid = txid_of(dep_tx)
-    version, dep_ins, _, locktime = parse_tx(dep_tx)
 
-    # the lattice: pre-authorized emergency exits spending vault UTXO 0
+    # the lattice: pre-authorized emergency exits spending the vault UTXO
+    # (deposit vout `vault_vout` - NOT always 0: an already-correct
+    # funding tx may carry other outputs before the vault output)
+    # leaf names are zero-padded to a fixed width so that the device
+    # file-picker's lexicographic sort order == the numeric leaf order.
     files = []
     leaf_txs = []
+    leaf_w = len(str(leaves - 1)) if leaves > 1 else 1
     for i in range(leaves):
         fee = emg_fee + i * emg_step
         assert 0 < fee <= pol['f0_max'], \
@@ -253,11 +304,11 @@ def build_tree(pol, funding_path, outdir, deposit_fee, leaves,
         assert fee < vault_value, 'emg fee >= vault value'
         # vault txs commit nLockTime == 0 (REV3 5.3) - not inherited
         # from the funding tx
-        tx = ser_tx(version, [(dep_txid, 0, SEQ_EMERGENCY)],
+        tx = ser_tx(version, [(dep_txid, vault_vout, SEQ_EMERGENCY)],
                     [(spk_e, vault_value - fee)], 0)
         wu = ct_out(spk_v, vault_value)
         im = vi(1) + b'\x01' + vi(len(wu)) + wu + b'\x00'   # witness-utxo map
-        name = 'emg%d.psbt' % i
+        name = 'emg%0*d.psbt' % (leaf_w, i)
         open(os.path.join(outdir, name), 'wb').write(
             build_psbt(tx, [im], 1))
         files.append(name)
@@ -274,6 +325,7 @@ def build_tree(pol, funding_path, outdir, deposit_fee, leaves,
         'funding_value': total_in,
         'deposit_fee': deposit_fee,
         'vault_value': vault_value,
+        'vault_vout': vault_vout,
         'deposit_txid': dep_txid[::-1].hex(),     # display order
         'files': files,
         # for the unix/vault_sim_e2e.py device driver
@@ -287,9 +339,13 @@ def build_tree(pol, funding_path, outdir, deposit_fee, leaves,
     print('funding value:    %d sats' % total_in)
     print('vault value:      %d sats (deposit fee %d)' %
           (vault_value, deposit_fee))
+    print('vault vout:       %d' % vault_vout)
     print('deposit txid:     %s' % manifest['deposit_txid'])
     print('lattice:          %d emergency leaves, fees %d..%d' %
           (count, emg_fee, emg_fee + (leaves - 1) * emg_step))
+    print('leaf files:       emg%0*d.psbt .. emg%0*d.psbt (fixed width: '
+          'file-picker sort order == leaf order; ENROLL IN THAT ORDER)'
+          % (leaf_w, 0, leaf_w, leaves - 1))
     print('lattice root:     %s' % root.hex())
     print('wrote %d emg PSBTs + deposit.psbt + manifest.json to %s' %
           (count, outdir))

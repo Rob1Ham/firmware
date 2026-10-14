@@ -160,8 +160,8 @@ class VaultPolicy:
     #   n, spk_v (hex), spk_e (hex), k1 (hex pubkey), f0_max, exit_dest (hex spk')
     def __init__(self, d):
         _h = lambda k: bytes(bytearray.fromhex(d[k])) if d.get(k) else None
-        self.spk_v, self.spk_e, self.k1 = _h("spk_v"), _h("spk_e"), _h("k1")
-        self.exit_dest = _h("exit_dest")
+        self.spk_v, self.spk_e, self.k1 = _h("sv_hash"), _h("spk_e"), _h("k1_pubkey")
+        self.exit_dest = _h("exit_spk")
         self.n = d.get("n", 1008)
         self.f0_max = d.get("f0_max", 10000)
 

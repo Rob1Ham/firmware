@@ -16,7 +16,6 @@ from utils import swab32, xfp2str, truncate_address, deserialize_secret, show_si
 from glob import settings, dis
 from ux import ux_confirm, ux_show_story, the_ux, OK, ux_enter_number, ux_aborted
 from menu import MenuSystem, MenuItem, start_chooser
-from menu import SystemMenu
 from seed import seed_words_to_encoded_secret
 from stash import SecretStash
 from charcodes import KEY_QR, KEY_CANCEL, KEY_NFC

@@ -19,9 +19,9 @@
 from vault_policy import VaultPolicy, VaultViolation, leaf_hash, lattice_root
 
 try:
-    from ubinascii import hexlify as _hexlify
+    from ubinascii import hexlify as _hexlify, unhexlify as _unhexlify
 except ImportError:
-    from binascii import hexlify as _hexlify
+    from binascii import hexlify as _hexlify, unhexlify as _unhexlify
 
 VAULT_LOG = 'vault.log'
 
@@ -51,7 +51,7 @@ def is_strict():
 
 
 def _h2b(x):
-    return bytes(bytearray.fromhex(x)) if x else None
+    return _unhexlify(x) if x else None
 
 
 def check_relevance(psbt, cfg):

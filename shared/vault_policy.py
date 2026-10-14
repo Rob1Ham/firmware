@@ -21,6 +21,11 @@ try:
 except ImportError:
     from hashlib import sha256 as _sha256
 
+try:
+    from ubinascii import unhexlify as _unhex
+except ImportError:
+    from binascii import unhexlify as _unhex
+
 OP_IF, OP_ELSE, OP_ENDIF = 0x63, 0x67, 0x68
 OP_DROP = 0x75
 OP_CSV = 0xB2
@@ -160,7 +165,7 @@ class VaultPolicy:
     #   n, sv_hash (hex spk), spk_e (hex), k1_pubkey (hex),
     #   f0_max (sats), exit_spk (hex) -- see testing fixtures.
     def __init__(self, d):
-        _h = lambda k: bytes(bytearray.fromhex(d[k])) if d.get(k) else None
+        _h = lambda k: _unhex(d[k]) if d.get(k) else None
         self.spk_v, self.spk_e, self.k1 = _h("sv_hash"), _h("spk_e"), _h("k1_pubkey")
         self.exit_dest = _h("exit_spk")
         self.n = d.get("n", 1008)

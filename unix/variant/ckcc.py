@@ -206,9 +206,16 @@ def get_sim_root_dirs():
     import ffilib
     libc = ffilib.libc()
 
-    b = bytearray(500)
-    cwd = libc.func("s", "getcwd", "pi")(b, len(b))
-    assert cwd
+    if libc:
+        b = bytearray(500)
+        cwd = libc.func("s", "getcwd", "pi")(b, len(b))
+        assert cwd
+    else:
+        # no FFI in this build (host lacks libffi-dev). The simulator
+        # launcher runs us with cwd = unix/work and all consumers use
+        # the result as a plain path prefix, so '.' (resolved against
+        # the process cwd) is equivalent to getcwd() here.
+        cwd = '.'
 
     return cwd, cwd+'/MicroSD'
 

@@ -59,7 +59,28 @@ Branch `vault-cosign-policy` on coldcard-vault (Coldcard firmware fork).
    display. Parity proven vs a naive two-pass reference tree across
    13 batch sizes incl. odd counts. USB framed transport (plan T7.4)
    simplified to the existing file picker.
-5. Simulator run (unix/ port) once hook lands.
+5. DONE 2026-10-14 — simulator run (unix/ port). Built coldcard-mpy on a
+   constrained host: submodules re-initialized, mpy-cross built first,
+   `MICROPY_PY_FFI=0` (no libffi-dev, no sudo) +
+   `CFLAGS_EXTRA="-Wno-error=dangling-pointer -Wno-error=enum-int-mismatch"`
+   (old mpy vs new gcc). Two real bugs found and fixed by the simulator:
+   (a) `vault.py`/`vault_policy.py` used `bytearray.fromhex`, which mpy
+   v1.12 lacks -> replaced with `ubinascii`/`binascii` `unhexlify`
+   (with ImportError fallback for host); (b) frozen `unix/variant/ckcc.py`
+   `get_sim_root_dirs` assumed FFI libc getcwd -> no-FFI fallback to
+   `cwd='.'` (launcher runs with cwd=unix/work). Validation, two tiers:
+   (1) `unix/vault_sim_smoke.py` — device-context smoke run inside
+   coldcard-mpy with real nvstore (SettingsObject + MK4_WORKDIR):
+   14/14 checks incl. NVS round-trip, mpy-path emergency-approve and
+   wrong-N ladder refuse, known-answer lattice root (computed
+   independently on CPython host)
+   `750024e529e68a0e2bb6abe0e6b58aab3e327573d1ca1ba193ff942924a993e9`
+   (5 leaves, cross-runtime agreement), vault.log written,
+   VaultConfigMenu constructs, wipe; (2) full headless firmware boot
+   `python3 ./simulator.py --headless` — clean through sim_boot ->
+   main -> 'Start: mainline' (flow.py vault_menu import chain) with no
+   tracebacks. Host suites re-verified green after the portability
+   fixes: policy 8/8, glue 34/34.
 
 ## Session 2026-10-14 (b) — vault mode glue landed (for real)
 

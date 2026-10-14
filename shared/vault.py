@@ -54,20 +54,40 @@ def _h2b(x):
     return _unhexlify(x) if x else None
 
 
+def _iter_input_utxos(psbt):
+    # Yield (spk, value) for each input's spent output. Two shapes:
+    #  - real firmware psbtObject: utxo/witness_utxo are (pos,len) proxies
+    #    into the PSBT file, so recover the CTxOut via input.get_utxo(idx)
+    #    (which prefers the full non-witness utxo when present)
+    #  - host-test fakes: duck-typed .utxo objects.
+    # Inputs with no utxo info are skipped here; view_from_psbt refuses
+    # them instead (this fn only powers the relevance sniff).
+    if hasattr(psbt, 'input_iter') and hasattr(psbt, 'output_iter'):
+        for idx, txin in psbt.input_iter():
+            inp = psbt.inputs[idx]
+            if not (getattr(inp, 'utxo', None) or getattr(inp, 'witness_utxo', None)):
+                continue
+            u = inp.get_utxo(idx)
+            yield bytes(u.scriptPubKey), u.nValue
+    else:
+        for inp in psbt.inputs:
+            u = getattr(inp, 'utxo', None)
+            if u is None:
+                continue
+            yield bytes(u.scriptPubKey), getattr(u, 'nValue', None)
+
+
 def check_relevance(psbt, cfg):
     # A tx must pass policy iff any input spends the vault or the sink.
     spk_v, spk_e = _h2b(cfg.get('sv_hash')), _h2b(cfg.get('spk_e'))
     if not (spk_v or spk_e):
         return False
     try:
-        for inp in psbt.inputs:
-            u = getattr(inp, 'utxo', None)
-            if u is None:
-                continue
-            if (spk_v and u.scriptPubKey == spk_v) \
-                    or (spk_e and u.scriptPubKey == spk_e):
+        for spk, val in _iter_input_utxos(psbt):
+            if (spk_v and spk == spk_v) \
+                    or (spk_e and spk == spk_e):
                 return True
-    except AttributeError:
+    except Exception:
         return True     # odd shape: treat as relevant, policy will judge
     return False
 
@@ -77,6 +97,28 @@ def view_from_psbt(psbt):
     # VaultViolation whenever a needed fact is uncollectable so the caller
     # refuses instead of approving on partial information.
     view = {'lock_time': getattr(psbt, 'lock_time', 0), 'inputs': [], 'outputs': []}
+    if hasattr(psbt, 'input_iter') and hasattr(psbt, 'output_iter'):
+        # real firmware psbtObject: nSequence lives in the unsigned tx
+        # (input_iter -> CTxIn), utxos are file proxies, outputs stream
+        # via output_iter(); part_sigs is a {pubkey: sig} dict.
+        seqs = dict((idx, txin.nSequence) for idx, txin in psbt.input_iter())
+        for idx, inp in enumerate(psbt.inputs):
+            if not (getattr(inp, 'utxo', None) or getattr(inp, 'witness_utxo', None)):
+                raise VaultViolation('missing witness_utxo')
+            u = inp.get_utxo(idx)
+            part = getattr(inp, 'part_sigs', None)
+            view['inputs'].append({
+                'spk': bytes(u.scriptPubKey),
+                'value': u.nValue,
+                'sequence': seqs.get(idx),
+                'part_sigs': list(part) if part else [],
+            })
+        for idx, txo in psbt.output_iter():
+            view['outputs'].append({
+                'spk': bytes(txo.scriptPubKey),
+                'value': txo.nValue,
+            })
+        return view
     for inp in psbt.inputs:
         u = getattr(inp, 'utxo', None)
         if u is None:
@@ -200,6 +242,9 @@ def enroll_lattice(cfg, psbt_iter):
             tx = getattr(psbt, 'txn', None)
             if not tx:
                 raise VaultViolation('lattice[%d]: missing unsigned tx' % i)
+            if not isinstance(tx, (bytes, bytearray)):
+                # real psbtObject: .txn is a (pos,len) proxy into the file
+                tx = psbt.get(tx)
             yield leaf_hash(i, tx)
 
     root, count = lattice_root(leaves())

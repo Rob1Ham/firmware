@@ -118,3 +118,39 @@ Branch `vault-cosign-policy` on coldcard-vault (Coldcard firmware fork).
   `_FakeSettings` class shim -> 17/17.
 - Second test bug: `vault.log` assertion expected exactly 2 lines but
   earlier `could_sign` calls also append; relaxed to `>= 2`.
+
+## Session 2026-10-14 (c) — full end-to-end flow in the simulator
+
+User asked for the whole flow run in the simulator with fake PSBTs. Two
+deliverables:
+
+- **REAL-PSBT adapter in `shared/vault.py`** (integration gap found while
+  preparing the run): the duck-typed view (`inp.utxo.scriptPubKey`,
+  `inp.sequence`, `psbt.txn` as bytes) only worked on host-test fakes.
+  Real firmware `psbtObject` stores utxo/witness_utxo as (pos,len) file
+  proxies and keeps nSequence in the unsigned tx, so every real PSBT
+  would have fail-closed with 'missing witness_utxo'. Added:
+  `_iter_input_utxos` (relevance sniff via `input.get_utxo(idx)` /
+  duck-typed fallback), a real-PSBT branch in `view_from_psbt`
+  (sequences from `input_iter()`, outputs from `output_iter()`,
+  part_sigs dict -> pubkey list), and proxy-aware `.txn` extraction in
+  `enroll_lattice`. Host suites stayed green (fakes still work).
+- **End-to-end tooling**: `unix/vault_e2e_gen.py` (host) builds REAL
+  BIP-174 v0 PSBT binaries covering every policy class (P1 emergency,
+  P3 exit w/ K1 partial sig, correct-N and wrong-N ladders, INV-SINK
+  sink-paying ladder, locktime-pinned emergency, non-vault spend) plus
+  `expected.json` with the host-computed lattice root;
+  `unix/vault_sim_e2e.py` (device) parses them with the real
+  `psbtObject.read_psbt` inside coldcard-mpy and runs: enroll -> enable
+  -> lattice enrollment (root cross-checked vs host) -> store -> the
+  exact auth.py choke-point call `VaultMode.could_sign` over all
+  scenarios -> strict-mode refuse -> `ccc.SpendingPolicy({'vel':100})`
+  velocity-ratchet delegation (vault tx skips, non-vault refused
+  'no nLockTime') -> wipe.
+
+Test reality: `VAULT SIM E2E: 16/16 checks pass` (rc=0, no stderr);
+smoke re-run `14/14`; host suites `34/34` and `8/8`. All in the same
+run after the adapter landed. Lattice root agreement host<->device over
+real PSBT tx bytes: `8317744dbdd8cb62975ede46c71874681de147bcc95a6c6e3e`
+`a244261c3ea6e1` (5 leaves). Generated PSBTs live in unix/work/sim-e2e
+(not committed; regenerate with the generator).

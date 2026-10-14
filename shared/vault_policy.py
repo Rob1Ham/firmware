@@ -4,13 +4,14 @@
 # emergency deepvault S_e). No device imports: runs on host (CPython) and target
 # (MicroPython) so the exact signing rules can be unit-tested off-device.
 #
-# Enforces, for CCC key K3:
-#   P1  emergency shape: 1-in/1-out to spk_e, out == in-F, 0 < F <= f0_max,
+# Enforces, for the CCC key K3 co-signer slot:
+#   P1  emergency shape: 1-in(spk_v)/1-out to spk_e, 0 < F <= f0_max,
 #       all nSequence == 0xFFFFFFFD, nLockTime == 0.
 #   P2  spend-forbid: never sign a spend of spk_e...
 #   P3  ...except the exit ceremony: 1-in(spk_e)/1-out to exit_dest, fee-bounded,
 #       K1 partial sig already present in the PSBT.
-#   INV-SEQ: vault-ladder spends commit nSequence == N (height-form CSV only).
+#   INV-SEQ: vault-ladder spends commit nSequence == N (height-form CSV only);
+#       sink entry happens only via the emergency class.
 #
 # Also includes structural parsers for the S_v / S_e witness scripts
 # (INV-BRANCH, INV-KEYLESS: recompute, never trust).
@@ -22,17 +23,16 @@ except ImportError:
 
 OP_IF, OP_ELSE, OP_ENDIF = 0x63, 0x67, 0x68
 OP_DROP = 0x75
-OP_CLTV, OP_CSV = 0xB1, 0xB2
-OP_CMS, OP_CSV_VER = 0xAE, 0xAD
+OP_CSV = 0xB2
+OP_CMS = 0xAE
+OP_CHECKSIGVERIFY = 0xAD
 
-SEQ_EMERGENCY = 0xFFFFFFFD          # CSV disable flag set, RBF on
+SEQ_EMERGENCY = 0xFFFFFFFD          # CSV disabled, RBF on
 SEQ_DISABLE_FLAG = 1 << 31
 SEQ_TYPE_TIME = 1 << 22
 SEQ_VALUE_MASK = 0xFFFF
 
-TAPROOT_LEAF_VERSION_TAPSCRIPT = 0xC0
-
-MAX_CSV_BLOCKS = 0xFFFF             # 16-bit height-form CSV; ~455 days max
+MAX_CSV_BLOCKS = 0xFFFF             # 16-bit height-form CSV; ~455 days
 
 
 class VaultViolation(Exception):
@@ -49,6 +49,8 @@ def decode_opcode(script, pos):
             raise VaultViolation("push past end")
         return op, script[pos:pos + n], pos + n
     if op == 0x4c:  # PUSHDATA1
+        if pos >= len(script):
+            raise VaultViolation("push past end")
         n = script[pos]
         pos += 1
         if pos + n > len(script):
@@ -57,30 +59,14 @@ def decode_opcode(script, pos):
     return op, None, pos
 
 
-def push_number(b):
-    # Minimal script-num encode of non-negative int b (CSV operand).
-    if b == 0:
-        return b""
-    res = bytearray()
-    while b:
-        res.append(b & 0xFF)
-        b >>= 8
-    if res[-1] & 0x80:
-        res.append(0)
-    return bytes(res)
-
-
 def decode_pushnum(payload):
-    # Script-num decode of a 0..65535 push.
+    # Script-num decode of a non-negative small-int push.
     if not payload:
         return 0
     n = 0
     for i, c in enumerate(payload):
         n |= c << (8 * i)
-    n &= 0x7FFFFFFF & (0xFF << (8 * (len(payload) - 1))) | 0x7FFFFFFF >> (
-        8 * (4 * 0)) if False else n  # keep simple: sign bit handled below
     if payload[-1] & 0x80:
-        n &= ~(0x80 << (8 * (len(payload) - 1)))
         raise VaultViolation("negative pushnum")
     return n
 
@@ -93,29 +79,30 @@ def _expect(script, pos, op):
 
 def _expect_pubkey(script, pos):
     op, payload, pos2 = decode_opcode(script, pos)
-    if op != 33 or len(payload) != 33 or payload[0] not in (0x02, 0x03):
+    if op != 33 or payload is None or payload[0] not in (0x02, 0x03):
         raise VaultViolation("not a compressed pubkey")
     return payload, pos2
 
 
 def parse_vault_script(wscript):
-    # Structural parse of S_v (D-1'): OP_IF <N> OP_CSV OP_DROP <empty ELSE> OP_ENDIF
+    # Structural parse of S_v (D-1'):
+    #   OP_IF <N> OP_CSV OP_DROP <empty ELSE branch> OP_ENDIF
     #   OP_2 <K1> <K2> <K3> OP_3 OP_CHECKMULTISIG
-    # INV-KEYLESS: both branches fall into the shared 2-of-3; the truthy branch ends
-    # in CSV DROP (no bare OP_1 posture). Returns dict(n=..., keys=(k1,k2,k3)).
-    if not wscript or len(wscript) > 140 or len(wscript) < 111:
+    # INV-KEYLESS: both branches fall into the shared 2-of-3; the truthy
+    # branch ends in CSV DROP, never a keyless OP_1 posture.
+    # Returns dict(n=..., keys=[k1, k2, k3]).
+    if not wscript or len(wscript) < 111 or len(wscript) > 140:
         raise VaultViolation("S_v size out of range")
     pos = _expect(wscript, 0, OP_IF)
     op, payload, pos = decode_opcode(wscript, pos)
-    if op == OP_IF + 0 or payload is None:
+    if payload is None:
         raise VaultViolation("S_v: no N push")
     n = decode_pushnum(payload)
     if not (1 <= n <= MAX_CSV_BLOCKS):
-        if payload:
-            raise VaultViolation("S_v: N range")
+        raise VaultViolation("S_v: N range")
     pos = _expect(wscript, pos, OP_CSV)
     pos = _expect(wscript, pos, OP_DROP)
-    pos = _expect(wscript, pos, OP_ELSE)     # empty ELSE branch (deepvault exit sits at OP_ENDIF)
+    pos = _expect(wscript, pos, OP_ELSE)     # empty ELSE branch
     pos = _expect(wscript, pos, OP_ENDIF)
     pos = _expect(wscript, pos, 0x52)        # OP_2
     k1, pos = _expect_pubkey(wscript, pos)
@@ -123,15 +110,16 @@ def parse_vault_script(wscript):
     k3, pos = _expect_pubkey(wscript, pos)
     pos = _expect(wscript, pos, 0x53)        # OP_3
     _expect(wscript, pos, OP_CMS)
-    return dict(n=n, keys=(k1, k2, k3))
+    return dict(n=n, keys=[k1, k2, k3])
 
 
 def parse_deepvault_script(wscript):
     # Structural parse of S_e (E-2): <K1> OP_CHECKSIGVERIFY OP_1 <K2> <K3> OP_2 OP_CMS
+    # (K1 signs always; then exactly one of K2/K3 -> default-deny even past K1.)
     if not wscript or len(wscript) != 106:
         raise VaultViolation("S_e size")
     k1, pos = _expect_pubkey(wscript, 0)
-    pos = _expect(wscript, pos, OP_CSV_VER)
+    pos = _expect(wscript, pos, OP_CHECKSIGVERIFY)
     pos = _expect(wscript, pos, 0x51)        # OP_1
     k2, pos = _expect_pubkey(wscript, pos)
     k3, pos = _expect_pubkey(wscript, pos)
@@ -145,7 +133,7 @@ def p2wsh_spk(wscript):
 
 
 def sequence_class(seq):
-    # 'emergency' | ('csv', n) | 'plain' | refuse time-form CSV
+    # Internal tuple form: ('emergency'|'csv'|'csv_time'|'plain', value)
     if seq == SEQ_EMERGENCY:
         return ("emergency", 0)
     if seq & SEQ_DISABLE_FLAG:
@@ -155,9 +143,22 @@ def sequence_class(seq):
     return ("csv", seq & SEQ_VALUE_MASK)
 
 
+def decode_sequence(seq):
+    # Public label form used by tests/UI. Time-form CSV is refused outright
+    # (REV3 section 7a: only height-form CSV participates in the protocol).
+    if seq == SEQ_EMERGENCY:
+        return "emergency"
+    if seq & SEQ_DISABLE_FLAG:
+        return "disabled"
+    if seq & SEQ_TYPE_TIME:
+        raise VaultViolation("time-form CSV refused")
+    return "csv"
+
+
 class VaultPolicy:
     # Decision object built from a plain dict (NVS-serializable):
-    #   n, spk_v (hex), spk_e (hex), k1 (hex pubkey), f0_max, exit_dest (hex spk')
+    #   n, sv_hash (hex spk), spk_e (hex), k1_pubkey (hex),
+    #   f0_max (sats), exit_spk (hex) -- see testing fixtures.
     def __init__(self, d):
         _h = lambda k: bytes(bytearray.fromhex(d[k])) if d.get(k) else None
         self.spk_v, self.spk_e, self.k1 = _h("sv_hash"), _h("spk_e"), _h("k1_pubkey")
@@ -166,36 +167,40 @@ class VaultPolicy:
         self.f0_max = d.get("f0_max", 10000)
 
     def _classify(self, view):
-        # view = {lock_time:int, inputs:[...], outputs:[...]}
+        # view = {lock_time:int, inputs:[{spk,value,sequence,part_sigs}], outputs:[...]}
         spends_e = any(i["spk"] == self.spk_e for i in view["inputs"])
         seqs = [i["sequence"] for i in view["inputs"]]
         if all(s == SEQ_EMERGENCY for s in seqs):
             return "exit" if spends_e else "emergency"
-        for i in view["inputs"]:
-            if i["spk"] == self.spk_v or spends_e:
-                if spends_e:
-                    return "exit"
-        for s in seqs:
-            cls, _n = sequence_class(s)
-            if cls == "csv":
-                return "ladder"
+        if spends_e:
+            # sink spend without emergency discipline is still routed to the
+            # exit checker, which default-refuses (P2) unless P3 applies.
+            return "exit"
+        if any(sequence_class(s)[0] == "csv" for s in seqs):
+            return "ladder"
         return "other"
 
     def check(self, view):
         # Raise VaultViolation to block; return description string otherwise.
-        if view["lock_time"] != 0:
-            # sequences that disable CSV with set locktime = "Bad Locktime" shape
-            if all(sequence_class(s)[0] != "csv" for s in
-                   [i["sequence"] for i in view["inputs"]]):
-                raise VaultViolation("locktime/sequence shape")
         kind = self._classify(view)
+        # INV-SINK: entering the deepvault sink is only legal via the
+        # emergency class (P1 canonical form). A ladder-shaped tx paying
+        # spk_e would smuggle funds deeper without emergency discipline.
+        if kind != "emergency" and any(o["spk"] == self.spk_e
+                                       for o in view["outputs"]):
+            raise VaultViolation("P1: sink entry only via emergency class")
+        if kind == "other":
+            raise VaultViolation("not a recognized vault class")
+        # All vault classes commit nLockTime == 0 (REV3 5.3). CSV ladder txs
+        # especially: locktime set + csv seq is exactly the "bad locktime"
+        # shape that would let an attacker back-date pinning.
+        if view["lock_time"] != 0:
+            raise VaultViolation("vault txs commit nLockTime == 0")
         if kind == "emergency":
             return self._check_emergency(view)
         if kind == "exit":
             return self._check_exit(view)
-        if kind == "ladder":
-            return self._check_ladder(view)
-        raise VaultViolation("not a recognized vault class")
+        return self._check_ladder(view)
 
     def _check_emergency(self, view):
         # P1: exact sink shape
@@ -204,22 +209,20 @@ class VaultPolicy:
         if len(view["outputs"]) != 1:
             raise VaultViolation("P1: 1 output")
         out = view["outputs"][0]
-        if out["spk"] != self.spk_e or out["is_change"]:
-            raise VaultViolation("P1: dest")
+        if out["spk"] != self.spk_e or out.get("is_change"):
+            raise VaultViolation("P1: dest is the pinned spk_e")
         if view["inputs"][0]["spk"] != self.spk_v:
             raise VaultViolation("P1: must spend the vault")
-        if view["lock_time"] != 0:
-            raise VaultViolation("P1: locktime")
         for i in view["inputs"]:
             if sequence_class(i["sequence"])[0] != "emergency":
-                raise VaultViolation("P1: sequence")
+                raise VaultViolation("P1: sequence must be 0xFFFFFFFD")
         fee = view["inputs"][0]["value"] - out["value"]
         if not (0 < fee <= self.f0_max):
-            raise VaultViolation("P1: fee")
+            raise VaultViolation("P1: fee out of window")
         return "emergency F=%d" % fee
 
     def _check_ladder(self, view):
-        # INV-SEQ: vault spends are cadence-committed; N exactly, height form only.
+        # INV-SEQ: vault spends are cadence-committed; exactly N, height form.
         for i in view["inputs"]:
             if i["spk"] != self.spk_v:
                 continue
@@ -243,7 +246,7 @@ class VaultPolicy:
             raise VaultViolation("P3: must re-enroll to fresh spk_v'")
         fee = view["inputs"][0]["value"] - view["outputs"][0]["value"]
         if not (0 < fee <= self.f0_max):
-            raise VaultViolation("P3: fee")
+            raise VaultViolation("P3: fee out of window")
         # belt-and-braces behind the E-2 script: K1's sig must already be present
         if not any(self.k1 in (i.get("part_sigs") or []) for i in view["inputs"]):
             raise VaultViolation("P3: K1 co-signature required")

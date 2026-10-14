@@ -444,6 +444,19 @@ class ApproveTransaction(UserAuthorizedAction):
         # - might add warnings
         could_ccc_sign, ccc_needs_2fa = CCCFeature.could_cosign(self.psbt)
 
+        # vault policy gate: fail-closed, runs before any approval path.
+        # VaultMode.could_sign never raises; it logs to vault.log itself.
+        # Any unexpected error here (import, settings) also blocks signing.
+        try:
+            import vault
+            if vault.VaultMode.is_enabled():
+                v_ok, v_msg = vault.VaultMode.could_sign(self.psbt)
+                if not v_ok:
+                    return await self.failure(v_msg, title='VAULT')
+        except Exception as ve:
+            return await self.failure('Vault policy error: %s' % ve,
+                                      title='VAULT')
+
         # test for allowing any signature when in single-signer mode
         # - but CCC will override it.
         should_block, ss_needs_2fa = SSSPFeature.can_allow(self.psbt)
